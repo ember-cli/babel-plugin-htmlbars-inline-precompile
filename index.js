@@ -21,6 +21,10 @@ module.exports = function(precompile) {
 
       TaggedTemplateExpression: function(node, parent, scope, file) {
         if (t.isIdentifier(node.tag, { name: file.importSpecifier })) {
+          if (node.quasi.expressions.length) {
+            throw file.errorWithNode(node, "placeholders inside a tagged template string are not supported");
+          }
+
           var template = node.quasi.quasis.map(function(quasi) {
             return quasi.value.cooked;
           }).join("");

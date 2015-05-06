@@ -52,4 +52,14 @@ describe("htmlbars-inline-precompile", function() {
 
     assert.equal(transformed, expected, "other tagged template strings are not touched");
   });
+
+  it("warns when the tagged template string contains placeholders", function() {
+    try {
+      transform("import hbs from 'htmlbars-inline-precompile'; var compiled = hbs`string ${value}`");
+
+      assert.fail("error should have been thrown");
+    } catch (e) {
+      assert.ok(e.message.match(/placeholders inside a tagged template string are not supported/));
+    }
+  });
 });
