@@ -1,4 +1,4 @@
-# babel-plugin-htmlbars-inline-precompile
+# babel-plugin-htmlbars-inline-precompile [![Build Status](https://travis-ci.org/pangratz/babel-plugin-htmlbars-inline-precompile.svg?branch=master)](https://travis-ci.org/pangratz/babel-plugin-htmlbars-inline-precompile)
 
 Babel plugin to replace ES6 tagged template strings with the `HTMLBars.precompile`d version of it:
 
