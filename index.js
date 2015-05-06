@@ -9,9 +9,9 @@ module.exports = function(precompile) {
           if (t.isImportDefaultSpecifier(first)) {
             state.importSpecifier = first.local.name;
           } else {
-            // TODO how to get the full import statement here?
-            var usedImportStatement = "TODO";
-            var msg = "Only `import hbs from 'htmlbars-inline-precompile'` is supported. You used: " + usedImportStatement;
+            var input = state.code;
+            var usedImportStatement = input.slice(node.start, node.end);
+            var msg = "Only `import hbs from 'htmlbars-inline-precompile'` is supported. You used: `" + usedImportStatement + "`";
             throw state.errorWithNode(node, msg);
           }
 
