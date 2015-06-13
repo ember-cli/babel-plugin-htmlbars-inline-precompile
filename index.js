@@ -15,7 +15,15 @@ module.exports = function(precompile) {
             throw file.errorWithNode(node, msg);
           }
 
-          this.remove();
+          // Prefer calling dangerouslyRemove instead of remove (if present) to
+          // suppress a deprecation warning.
+          //
+          // TODO: delete the fallback once we only support babel >= 5.5.0.
+          if (typeof this.dangerouslyRemove === 'function') {
+            this.dangerouslyRemove();
+          } else {
+            this.remove();
+          }
         }
       },
 
