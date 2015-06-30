@@ -38,13 +38,13 @@ module.exports = function(precompile) {
           }).join("");
 
           var compiledTemplateString = "Ember.HTMLBars.template(" + precompile(template) + ")";
-          
-          // Prefer calling replaceWithStringSource if it is present.
+
+          // Prefer calling replaceWithSourceString if it is present.
           // this prevents a deprecation warning in Babel 5.6.7+.
-          // 
+          //
           // TODO: delete the fallback once we only support babel >= 5.6.7.
-          if (this.replaceWithStringSource) {
-            this.replaceWithStringSource(compiledTemplateString);
+          if (this.replaceWithSourceString) {
+            this.replaceWithSourceString(compiledTemplateString);
           } else {
             return compiledTemplateString;
           }
