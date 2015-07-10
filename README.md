@@ -40,6 +40,26 @@ test("inline templates ftw", function(assert) {
 });
 ```
 
+If the template is compact, a normal string can be passed as argument as well:
+
+``` js
+import hbs from 'htmlbars-inline-precompile';
+
+module("my view");
+
+test("inline templates ftw", function(assert) {
+  var view = Ember.View.create({
+    greeting: "inline template world",
+    template: hbs('<h1>{{view.greeting}}</h1>')
+  });
+
+  view.appendTo('#testing');
+
+  assert.equal(view.$().html().trim(), "<h1>inline template world</h1>");
+});
+```
+
+
 ## Usage
 
 ``` js
