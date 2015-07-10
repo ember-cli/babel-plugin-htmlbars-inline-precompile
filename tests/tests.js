@@ -58,4 +58,32 @@ describe("htmlbars-inline-precompile", function() {
       transform("import hbs from 'htmlbars-inline-precompile'; var compiled = hbs`string ${value}`");
     }, /placeholders inside a tagged template string are not supported/);
   });
+
+  describe('single string argument', function() {
+    it("works with a plain string as parameter hbs('string')", function() {
+      var transformed = transform("import hbs from 'htmlbars-inline-precompile'; var compiled = hbs('hello');", function(template) {
+        return "precompiled(" + template + ")";
+      });
+
+      assert.equal(transformed, "var compiled = Ember.HTMLBars.template(precompiled(hello));", "tagged template is replaced");
+    });
+
+    it("warns when more than one argument is passed", function() {
+      assert.throws(function() {
+        transform("import hbs from 'htmlbars-inline-precompile'; var compiled = hbs('first', 'second');");
+      }, /hbs should be invoked with a single argument: the template string/);
+    });
+
+    it("warns when argument is not a string", function() {
+      assert.throws(function() {
+        transform("import hbs from 'htmlbars-inline-precompile'; var compiled = hbs(123);");
+      }, /hbs should be invoked with a single argument: the template string/);
+    });
+
+    it("warns when no argument is passed", function() {
+      assert.throws(function() {
+        transform("import hbs from 'htmlbars-inline-precompile'; var compiled = hbs();");
+      }, /hbs should be invoked with a single argument: the template string/);
+    });
+  });
 });

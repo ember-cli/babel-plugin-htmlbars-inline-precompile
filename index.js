@@ -42,6 +42,22 @@ module.exports = function(precompile) {
         }
       },
 
+      CallExpression: function(node, parent, scope, file) {
+        if (t.isIdentifier(node.callee, { name: file.importSpecifier })) {
+          var argumentErrorMsg = "hbs should be invoked with a single argument: the template string";
+          if (node.arguments.length !== 1) {
+            throw file.errorWithNode(node, argumentErrorMsg);
+          }
+
+          var template = node.arguments[0].value;
+          if (typeof template !== "string") {
+            throw file.errorWithNode(node, argumentErrorMsg);
+          }
+
+          return replaceNodeWithPrecompiledTemplate(this, template);
+        }
+      },
+
       TaggedTemplateExpression: function(node, parent, scope, file) {
         if (t.isIdentifier(node.tag, { name: file.importSpecifier })) {
           if (node.quasi.expressions.length) {
