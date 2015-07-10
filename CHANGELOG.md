@@ -1,3 +1,7 @@
+## 0.0.5 (2015-07-11)
+
+- [Allow single string parameter - #7](https://github.com/pangratz/babel-plugin-htmlbars-inline-precompile/commit/109b5f5c19e1c61654581b33e12f886b39e16412)
+
 ## 0.0.4 (2015-06-30)
 
 - [Fix "typo" for method which should replace deprecated behavior](https://github.com/pangratz/babel-plugin-htmlbars-inline-precompile/commit/f2458bede137297bd13e8308a35a489754eadc97)
