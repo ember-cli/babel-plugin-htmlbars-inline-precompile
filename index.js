@@ -1,5 +1,11 @@
+var semver = require('semver');
+
 module.exports = function(precompile) {
   return function(babel) {
+    if (!semver.satisfies(babel.version, '>= 5.2.10')) {
+      throw new Error("htmlbars-inline-precompile requires at least babel v5.2.10");
+    }
+
     var t = babel.types;
 
     var replaceNodeWithPrecompiledTemplate = function(node, template) {

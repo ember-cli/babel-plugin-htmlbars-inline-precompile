@@ -58,4 +58,10 @@ describe("htmlbars-inline-precompile", function() {
       transform("import hbs from 'htmlbars-inline-precompile'; var compiled = hbs`string ${value}`");
     }, /placeholders inside a tagged template string are not supported/);
   });
+
+  it("throws an error when an incompatible version of babel is used", function() {
+    assert.throws(function() {
+      HTMLBarsInlinePrecompile()({ version: "5.2.9" });
+    }, "htmlbars-inline-precompile requires at least babel v5.2.10");
+  });
 });
