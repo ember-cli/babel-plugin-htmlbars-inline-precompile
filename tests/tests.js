@@ -9,7 +9,6 @@ describe("htmlbars-inline-precompile", function() {
   beforeEach(function() {
     transform = function(code, precompile) {
       return babel.transform(code, {
-        blacklist: ['strict', 'es6.modules'],
         plugins: [HTMLBarsInlinePrecompile(precompile)]
       }).code;
     }
@@ -42,9 +41,7 @@ describe("htmlbars-inline-precompile", function() {
   });
 
   it("doesn't replace unrelated tagged template strings", function() {
-    var expected = babel.transform("var compiled = anotherTag`hello`;", {
-      blacklist: ['strict']
-    }).code;
+    var expected = babel.transform("var compiled = anotherTag`hello`;").code;
 
     var transformed = transform('import hbs from "htmlbars-inline-precompile"; var compiled = anotherTag`hello`;', function(template) {
       return "precompiled(" + template + ")";
