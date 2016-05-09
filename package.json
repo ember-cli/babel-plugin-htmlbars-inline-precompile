@@ -3,7 +3,8 @@
   "version": "0.0.5",
   "description": "Babel plugin to replace tagged template strings with precompiled HTMLBars templates",
   "scripts": {
-    "test": "mocha tests"
+    "test": "mocha tests",
+    "test:watch": "mocha -w tests"
   },
   "repository": "https://github.com/pangratz/babel-plugin-htmlbars-inline-precompile",
   "author": "Clemens Müller <cmueller.418@gmail.com>",

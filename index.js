@@ -2,8 +2,12 @@ module.exports = function(precompile) {
   return function(babel) {
     var t = babel.types;
 
-    var replaceNodeWithPrecompiledTemplate = function(node, template) {
-      var compiledTemplateString = "Ember.HTMLBars.template(" + precompile(template) + ")";
+    var replaceNodeWithPrecompiledTemplate = function(node, template, file) {
+      var moduleName = file.opts && file.opts.filenameRelative;
+
+      var compiledTemplateString = "Ember.HTMLBars.template(" + precompile(template, {
+        moduleName: moduleName
+      }) + ")";
 
       // Prefer calling replaceWithSourceString if it is present.
       // this prevents a deprecation warning in Babel 5.6.7+.
@@ -54,7 +58,7 @@ module.exports = function(precompile) {
             throw file.errorWithNode(node, argumentErrorMsg);
           }
 
-          return replaceNodeWithPrecompiledTemplate(this, template);
+          return replaceNodeWithPrecompiledTemplate(this, template, file);
         }
       },
 
@@ -68,7 +72,7 @@ module.exports = function(precompile) {
             return quasi.value.cooked;
           }).join("");
 
-          return replaceNodeWithPrecompiledTemplate(this, template);
+          return replaceNodeWithPrecompiledTemplate(this, template, file);
         }
       }
     });

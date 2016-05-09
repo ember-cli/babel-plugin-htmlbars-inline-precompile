@@ -68,6 +68,22 @@ describe("htmlbars-inline-precompile", function() {
       assert.equal(transformed, "var compiled = Ember.HTMLBars.template(precompiled(hello));", "tagged template is replaced");
     });
 
+    it("moduleName (filenameRelative) is passed through to precompiler", function() {
+      var code = "import hbs from 'htmlbars-inline-precompile'; var compiled = hbs('hello');";
+
+      var precompile = function(template, options) {
+        assert.equal(options.moduleName, 'module-name-test.js');
+
+        return "precompiled(" + template + ")";
+      };
+
+      babel.transform(code, {
+        blacklist: ['strict', 'es6.modules'],
+        plugins: [HTMLBarsInlinePrecompile(precompile)],
+        filenameRelative: 'module-name-test.js'
+      });
+    });
+
     it("warns when more than one argument is passed", function() {
       assert.throws(function() {
         transform("import hbs from 'htmlbars-inline-precompile'; var compiled = hbs('first', 'second');");
