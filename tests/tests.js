@@ -1,5 +1,5 @@
+var path = require('path');
 var assert = require('assert');
-
 var babel = require('babel-core');
 var HTMLBarsInlinePrecompile = require('../index');
 
@@ -59,6 +59,21 @@ describe("htmlbars-inline-precompile", function() {
     }, /placeholders inside a tagged template string are not supported/);
   });
 
+  it("moduleName is supplies to the precompiler", function() {
+    var fullpath = path.join(__dirname, 'fixtures', 'hello-world.js');
+
+    var precompile = function(template, options) {
+      assert.equal(options.moduleName, fullpath);
+
+      return "precompiled(" + template + ")";
+    };
+
+    babel.transformFileSync(fullpath, {
+      blacklist: ['strict', 'es6.modules'],
+      plugins: [HTMLBarsInlinePrecompile(precompile)]
+    });
+  });
+
   describe('single string argument', function() {
     it("works with a plain string as parameter hbs('string')", function() {
       var transformed = transform("import hbs from 'htmlbars-inline-precompile'; var compiled = hbs('hello');", function(template) {
@@ -66,22 +81,6 @@ describe("htmlbars-inline-precompile", function() {
       });
 
       assert.equal(transformed, "var compiled = Ember.HTMLBars.template(precompiled(hello));", "tagged template is replaced");
-    });
-
-    it("moduleName (filenameRelative) is passed through to precompiler", function() {
-      var code = "import hbs from 'htmlbars-inline-precompile'; var compiled = hbs('hello');";
-
-      var precompile = function(template, options) {
-        assert.equal(options.moduleName, 'module-name-test.js');
-
-        return "precompiled(" + template + ")";
-      };
-
-      babel.transform(code, {
-        blacklist: ['strict', 'es6.modules'],
-        plugins: [HTMLBarsInlinePrecompile(precompile)],
-        filenameRelative: 'module-name-test.js'
-      });
     });
 
     it("warns when more than one argument is passed", function() {
