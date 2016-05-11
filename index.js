@@ -4,10 +4,13 @@ module.exports = function(precompile) {
 
     var replaceNodeWithPrecompiledTemplate = function(node, template, file) {
       var moduleName = file.opts && file.opts.filenameRelative;
+      var opts = {};
 
-      var compiledTemplateString = "Ember.HTMLBars.template(" + precompile(template, {
-        moduleName: moduleName
-      }) + ")";
+      if (moduleName && moduleName !== 'unknown') {
+        opts.moduleName = moduleName;
+      }
+
+      var compiledTemplateString = "Ember.HTMLBars.template(" + precompile(template, opts) + ")";
 
       // Prefer calling replaceWithSourceString if it is present.
       // this prevents a deprecation warning in Babel 5.6.7+.
