@@ -1,13 +1,15 @@
-module.exports = function(precompile) {
+module.exports = function(precompile, pluginOptions) {
   return function(babel) {
     var t = babel.types;
 
     var replaceNodeWithPrecompiledTemplate = function(node, template, file) {
-      var moduleName = file.opts && file.opts.filenameRelative;
       var opts = {};
 
-      if (moduleName && moduleName !== 'unknown') {
-        opts.moduleName = moduleName;
+      if (pluginOptions && typeof pluginOptions.precompileOptions === 'function') {
+        var ret = pluginOptions.precompileOptions(file.opts);
+        if (typeof ret === 'object') {
+          opts = ret;
+        }
       }
 
       var compiledTemplateString = "Ember.HTMLBars.template(" + precompile(template, opts) + ")";

@@ -59,18 +59,30 @@ describe("htmlbars-inline-precompile", function() {
     }, /placeholders inside a tagged template string are not supported/);
   });
 
-  it("moduleName is supplies to the precompiler", function() {
-    var fullpath = path.join(__dirname, 'fixtures', 'hello-world.js');
+  it("precompileOptions can return options to the precompiler", function() {
+    var sourceRoot = path.join(__dirname, 'fixtures');
+    var filename = 'hello-world.js';
+    var fullpath = path.join(sourceRoot, filename);
 
     var precompile = function(template, options) {
-      assert.equal(options.moduleName, fullpath);
+      assert.equal(options.moduleName, filename);
 
       return "precompiled(" + template + ")";
     };
 
-    babel.transformFileSync(fullpath, {
+    var transpiled = babel.transformFileSync(fullpath, {
       blacklist: ['strict', 'es6.modules'],
-      plugins: [HTMLBarsInlinePrecompile(precompile)]
+      sourceRoot: sourceRoot,
+      plugins: [HTMLBarsInlinePrecompile(precompile, {
+        precompileOptions: function(opts) {
+          // example of how someone might use it to construct their own moduleName
+          var sourceRootRegEx = new RegExp("^" + opts.sourceRoot + "/?");
+
+          return {
+            moduleName: opts.filenameRelative.replace(sourceRootRegEx, "")
+          };
+        }
+      })]
     });
   });
 
