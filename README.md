@@ -69,6 +69,32 @@ var HTMLBarsInlinePrecompile = require('babel-plugin-htmlbars-inline-precompile'
 var pluginConfiguredWithCompiler = HTMLBarsInlinePrecompile(HTMLBarsCompiler.precompile);
 
 require('babel').transform("code", {
-  plugins: [ pluginConfiguredWithCompiler ]
+  plugins: [ pluginConfiguredWithCompiler]
+});
+```
+
+### Passing options to the precompiler
+
+As of 0.0.6, there is now the ability to pass options to the HTMLBars precompiler.
+
+This enables passing `moduleName`, which can be used to retrieve from within the compiled template where it originated from.
+
+``` js
+var HTMLBarsCompiler = require('./bower_components/ember/ember-template-compiler');
+var HTMLBarsInlinePrecompile = require('babel-plugin-htmlbars-inline-precompile');
+
+var pluginConfiguredWithCompiler = HTMLBarsInlinePrecompile(HTMLBarsCompiler.precompile, {
+  precompileOptions: function(opts) {
+    // example of moduleName generation
+    var sourceRootRegEx = new RegExp("^" + opts.sourceRoot + "/?");
+
+    return {
+      moduleName: opts.filenameRelative.replace(sourceRootRegEx, "")
+    };
+  }
+});
+
+require('babel').transform("code", {
+  plugins: [ pluginConfiguredWithCompiler]
 });
 ```
