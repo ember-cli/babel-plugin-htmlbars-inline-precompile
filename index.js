@@ -10,7 +10,7 @@ module.exports = function(babel) {
   return {
     visitor: {
       ImportDeclaration: function(path, state) {
-        var node = path.node
+        var node = path.node;
         var file = state.file;
         if (t.isLiteral(node.source, { value: "htmlbars-inline-precompile" })) {
           var first = node.specifiers && node.specifiers[0];
@@ -28,7 +28,7 @@ module.exports = function(babel) {
       },
 
       CallExpression: function(path, state) {
-        var node = path.node
+        var node = path.node;
         var file = state.file;
         if (t.isIdentifier(node.callee, { name: file.importSpecifier })) {
           var argumentErrorMsg = "hbs should be invoked with a single argument: the template string";
@@ -46,7 +46,7 @@ module.exports = function(babel) {
       },
 
       TaggedTemplateExpression: function(path, state) {
-        var node = path.node
+        var node = path.node;
         var file = state.file;
         if (t.isIdentifier(node.tag, { name: file.importSpecifier })) {
           if (node.quasi.expressions.length) {
