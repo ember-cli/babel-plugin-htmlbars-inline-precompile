@@ -18,9 +18,7 @@ module.exports = function(babel) {
         var node = path.node;
         if (t.isLiteral(node.source, { value: "htmlbars-inline-precompile" })) {
           var first = node.specifiers && node.specifiers[0];
-          if (t.isImportDefaultSpecifier(first)) {
-            state.hbsImportSpecifier = first.local.name;
-          } else {
+          if (!t.isImportDefaultSpecifier(first)) {
             var input = state.file.code;
             var usedImportStatement = input.slice(node.start, node.end);
             var msg = "Only `import hbs from 'htmlbars-inline-precompile'` is supported. You used: `" + usedImportStatement + "`";
@@ -31,43 +29,40 @@ module.exports = function(babel) {
         }
       },
 
-      CallExpression: function(path, state) {
-        var node = path.node;
-        if (t.isIdentifier(node.callee, { name: state.hbsImportSpecifier })) {
-          var argumentErrorMsg = "hbs should be invoked with a single argument: the template string";
-          if (node.arguments.length !== 1) {
-            throw path.buildCodeFrameError(argumentErrorMsg);
+      Identifier: function(path, state) {
+        if (path.referencesImport('htmlbars-inline-precompile', 'default')) {
+          var parent = path.parentPath;
+
+          var template;
+          if (parent.isCallExpression({ callee: path.node })) {
+            var argumentErrorMsg = "hbs should be invoked with a single argument: the template string";
+            if (parent.node.arguments.length !== 1) {
+              throw parent.buildCodeFrameError(argumentErrorMsg);
+            }
+
+            template = parent.node.arguments[0].value;
+            if (typeof template !== "string") {
+              throw parent.buildCodeFrameError(argumentErrorMsg);
+            }
+
+          } else if (parent.isTaggedTemplateExpression({ tag: path.node })) {
+            if (parent.node.quasi.expressions.length) {
+              throw parent.buildCodeFrameError("placeholders inside a tagged template string are not supported");
+            }
+
+            template = parent.node.quasi.quasis.map(function(quasi) {
+              return quasi.value.cooked;
+            }).join("");
+
+          } else {
+            return;
           }
 
-          var template = node.arguments[0].value;
-          if (typeof template !== "string") {
-            throw path.buildCodeFrameError(argumentErrorMsg);
-          }
+          var compiledTemplateString = "Ember.HTMLBars.template(" + state.opts.precompile(template) + ")";
 
-          return replaceNodeWithPrecompiledTemplate(state.opts.precompile, path, template);
+          parent.replaceWithSourceString(compiledTemplateString);
         }
       },
-
-      TaggedTemplateExpression: function(path, state) {
-        var node = path.node;
-        if (t.isIdentifier(node.tag, { name: state.hbsImportSpecifier })) {
-          if (node.quasi.expressions.length) {
-            throw path.buildCodeFrameError("placeholders inside a tagged template string are not supported");
-          }
-
-          var template = node.quasi.quasis.map(function(quasi) {
-            return quasi.value.cooked;
-          }).join("");
-
-          return replaceNodeWithPrecompiledTemplate(state.opts.precompile, path, template);
-        }
-      }
     }
   };
 };
-
-function replaceNodeWithPrecompiledTemplate(precompile, path, template) {
-  var compiledTemplateString = "Ember.HTMLBars.template(" + precompile(template) + ")";
-
-  path.replaceWithSourceString(compiledTemplateString);
-}
