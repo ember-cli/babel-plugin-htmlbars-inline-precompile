@@ -1,12 +1,6 @@
 module.exports = function(babel) {
   var t = babel.types;
 
-  var replaceNodeWithPrecompiledTemplate = function(precompile, path, template) {
-    var compiledTemplateString = "Ember.HTMLBars.template(" + precompile(template) + ")";
-
-    path.replaceWithSourceString(compiledTemplateString);
-  };
-
   return {
     visitor: {
       ImportDeclaration: function(path, state) {
@@ -60,3 +54,9 @@ module.exports = function(babel) {
     }
   };
 };
+
+function replaceNodeWithPrecompiledTemplate(precompile, path, template) {
+  var compiledTemplateString = "Ember.HTMLBars.template(" + precompile(template) + ")";
+
+  path.replaceWithSourceString(compiledTemplateString);
+}
