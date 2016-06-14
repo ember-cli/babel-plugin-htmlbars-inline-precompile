@@ -3,6 +3,17 @@ module.exports = function(babel) {
 
   return {
     visitor: {
+      Program: {
+        enter: function(path, state) {
+          state.hbsImports = [];
+        },
+        exit: function(path, state) {
+          state.hbsImports.forEach(function(path) {
+            path.remove();
+          });
+        },
+      },
+
       ImportDeclaration: function(path, state) {
         var node = path.node;
         if (t.isLiteral(node.source, { value: "htmlbars-inline-precompile" })) {
@@ -16,7 +27,7 @@ module.exports = function(babel) {
             throw path.buildCodeFrameError(msg);
           }
 
-          path.remove();
+          state.hbsImports.push(path);
         }
       },
 
