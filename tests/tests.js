@@ -8,12 +8,12 @@ function transform(code, precompile) {
     plugins: [
       [HTMLBarsInlinePrecompile, {precompile: precompile}],
     ],
-  }).code;
+  }).code.trim();
 }
 
 describe("htmlbars-inline-precompile", function() {
   it("strips import statement for 'htmlbars-inline-precompile' module", function() {
-    var transformed = transform("import hbs from 'htmlbars-inline-precompile'; import Ember from 'ember';");
+    var transformed = transform("import hbs from 'htmlbars-inline-precompile';\nimport Ember from 'ember';");
 
     assert.equal(transformed, "import Ember from 'ember';", "strips import statement");
   });
@@ -31,7 +31,7 @@ describe("htmlbars-inline-precompile", function() {
 
 
   it("replaces tagged template expressions with precompiled version", function() {
-    var transformed = transform("import hbs from 'htmlbars-inline-precompile'; var compiled = hbs`hello`;", function(template) {
+    var transformed = transform("import hbs from 'htmlbars-inline-precompile';\nvar compiled = hbs`hello`;", function(template) {
       return "precompiled(" + template + ")";
     });
 
@@ -41,7 +41,7 @@ describe("htmlbars-inline-precompile", function() {
   it("doesn't replace unrelated tagged template strings", function() {
     var expected = babel.transform("var compiled = anotherTag`hello`;").code;
 
-    var transformed = transform('import hbs from "htmlbars-inline-precompile"; var compiled = anotherTag`hello`;', function(template) {
+    var transformed = transform('import hbs from "htmlbars-inline-precompile";\nvar compiled = anotherTag`hello`;', function(template) {
       return "precompiled(" + template + ")";
     });
 
@@ -50,13 +50,13 @@ describe("htmlbars-inline-precompile", function() {
 
   it("warns when the tagged template string contains placeholders", function() {
     assert.throws(function() {
-      transform("import hbs from 'htmlbars-inline-precompile'; var compiled = hbs`string ${value}`");
+      transform("import hbs from 'htmlbars-inline-precompile';\nvar compiled = hbs`string ${value}`");
     }, /placeholders inside a tagged template string are not supported/);
   });
 
   describe('single string argument', function() {
     it("works with a plain string as parameter hbs('string')", function() {
-      var transformed = transform("import hbs from 'htmlbars-inline-precompile'; var compiled = hbs('hello');", function(template) {
+      var transformed = transform("import hbs from 'htmlbars-inline-precompile';\nvar compiled = hbs('hello');", function(template) {
         return "precompiled(" + template + ")";
       });
 
@@ -65,19 +65,19 @@ describe("htmlbars-inline-precompile", function() {
 
     it("warns when more than one argument is passed", function() {
       assert.throws(function() {
-        transform("import hbs from 'htmlbars-inline-precompile'; var compiled = hbs('first', 'second');");
+        transform("import hbs from 'htmlbars-inline-precompile';\nvar compiled = hbs('first', 'second');");
       }, /hbs should be invoked with a single argument: the template string/);
     });
 
     it("warns when argument is not a string", function() {
       assert.throws(function() {
-        transform("import hbs from 'htmlbars-inline-precompile'; var compiled = hbs(123);");
+        transform("import hbs from 'htmlbars-inline-precompile';\nvar compiled = hbs(123);");
       }, /hbs should be invoked with a single argument: the template string/);
     });
 
     it("warns when no argument is passed", function() {
       assert.throws(function() {
-        transform("import hbs from 'htmlbars-inline-precompile'; var compiled = hbs();");
+        transform("import hbs from 'htmlbars-inline-precompile';\nvar compiled = hbs();");
       }, /hbs should be invoked with a single argument: the template string/);
     });
   });
