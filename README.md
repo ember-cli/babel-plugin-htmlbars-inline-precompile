@@ -66,9 +66,9 @@ test("inline templates ftw", function(assert) {
 var HTMLBarsCompiler = require('./bower_components/ember/ember-template-compiler');
 var HTMLBarsInlinePrecompile = require('babel-plugin-htmlbars-inline-precompile');
 
-var pluginConfiguredWithCompiler = HTMLBarsInlinePrecompile(HTMLBarsCompiler.precompile);
-
 require('babel').transform("code", {
-  plugins: [ pluginConfiguredWithCompiler ]
+  plugins: [
+    [HTMLBarsInlinePrecompile, {precompile: HTMLBarsCompiler.precompile}],
+  ],
 });
 ```
