@@ -11,13 +11,12 @@ module.exports = function(babel) {
     visitor: {
       ImportDeclaration: function(path, state) {
         var node = path.node;
-        var file = state.file;
         if (t.isLiteral(node.source, { value: "htmlbars-inline-precompile" })) {
           var first = node.specifiers && node.specifiers[0];
           if (t.isImportDefaultSpecifier(first)) {
-            file.importSpecifier = first.local.name;
+            state.hbsImportSpecifier = first.local.name;
           } else {
-            var input = file.code;
+            var input = state.file.code;
             var usedImportStatement = input.slice(node.start, node.end);
             var msg = "Only `import hbs from 'htmlbars-inline-precompile'` is supported. You used: `" + usedImportStatement + "`";
             throw path.buildCodeFrameError(msg);
@@ -29,8 +28,7 @@ module.exports = function(babel) {
 
       CallExpression: function(path, state) {
         var node = path.node;
-        var file = state.file;
-        if (t.isIdentifier(node.callee, { name: file.importSpecifier })) {
+        if (t.isIdentifier(node.callee, { name: state.hbsImportSpecifier })) {
           var argumentErrorMsg = "hbs should be invoked with a single argument: the template string";
           if (node.arguments.length !== 1) {
             throw path.buildCodeFrameError(argumentErrorMsg);
@@ -47,8 +45,7 @@ module.exports = function(babel) {
 
       TaggedTemplateExpression: function(path, state) {
         var node = path.node;
-        var file = state.file;
-        if (t.isIdentifier(node.tag, { name: file.importSpecifier })) {
+        if (t.isIdentifier(node.tag, { name: state.hbsImportSpecifier })) {
           if (node.quasi.expressions.length) {
             throw path.buildCodeFrameError("placeholders inside a tagged template string are not supported");
           }
