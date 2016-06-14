@@ -3,19 +3,15 @@ var assert = require('assert');
 var babel = require('babel-core');
 var HTMLBarsInlinePrecompile = require('../index');
 
-var transform;
+function transform(code, precompile) {
+  return babel.transform(code, {
+    plugins: [
+      [HTMLBarsInlinePrecompile, {precompile: precompile}],
+    ],
+  }).code;
+}
 
 describe("htmlbars-inline-precompile", function() {
-  beforeEach(function() {
-    transform = function(code, precompile) {
-      return babel.transform(code, {
-        plugins: [
-          [HTMLBarsInlinePrecompile, {precompile: precompile}],
-        ],
-      }).code;
-    }
-  });
-
   it("strips import statement for 'htmlbars-inline-precompile' module", function() {
     var transformed = transform("import hbs from 'htmlbars-inline-precompile'; import Ember from 'ember';");
 
