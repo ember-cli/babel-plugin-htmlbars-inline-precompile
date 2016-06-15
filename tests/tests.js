@@ -39,13 +39,11 @@ describe("htmlbars-inline-precompile", function() {
   });
 
   it("doesn't replace unrelated tagged template strings", function() {
-    var expected = babel.transform("var compiled = anotherTag`hello`;").code;
-
     var transformed = transform('import hbs from "htmlbars-inline-precompile";\nvar compiled = anotherTag`hello`;', function(template) {
       return "precompiled(" + template + ")";
     });
 
-    assert.equal(transformed, expected, "other tagged template strings are not touched");
+    assert.equal(transformed, "var compiled = anotherTag`hello`;", "other tagged template strings are not touched");
   });
 
   it("warns when the tagged template string contains placeholders", function() {
