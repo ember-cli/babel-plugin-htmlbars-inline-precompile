@@ -9,7 +9,9 @@ describe("htmlbars-inline-precompile", function() {
   beforeEach(function() {
     transform = function(code, precompile) {
       return babel.transform(code, {
-        plugins: [HTMLBarsInlinePrecompile(precompile)]
+        plugins: [
+          [HTMLBarsInlinePrecompile, {precompile: precompile}],
+        ],
       }).code;
     }
   });
