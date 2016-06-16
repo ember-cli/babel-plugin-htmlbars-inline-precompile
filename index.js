@@ -1,65 +1,68 @@
 module.exports = function(babel) {
   var t = babel.types;
 
-  var replaceNodeWithPrecompiledTemplate = function(precompile, path, template) {
-    var compiledTemplateString = "Ember.HTMLBars.template(" + precompile(template) + ")";
-
-    path.replaceWithSourceString(compiledTemplateString);
-  };
-
   return {
     visitor: {
+      Program: {
+        enter: function(path, state) {
+          state.hbsImports = [];
+        },
+        exit: function(path, state) {
+          state.hbsImports.forEach(function(path) {
+            path.remove();
+          });
+        },
+      },
+
       ImportDeclaration: function(path, state) {
-        var node = path.node
-        var file = state.file;
+        var node = path.node;
         if (t.isLiteral(node.source, { value: "htmlbars-inline-precompile" })) {
           var first = node.specifiers && node.specifiers[0];
-          if (t.isImportDefaultSpecifier(first)) {
-            file.importSpecifier = first.local.name;
-          } else {
-            var input = file.code;
+          if (!t.isImportDefaultSpecifier(first)) {
+            var input = state.file.code;
             var usedImportStatement = input.slice(node.start, node.end);
             var msg = "Only `import hbs from 'htmlbars-inline-precompile'` is supported. You used: `" + usedImportStatement + "`";
             throw path.buildCodeFrameError(msg);
           }
 
-          path.remove();
+          state.hbsImports.push(path);
         }
       },
 
-      CallExpression: function(path, state) {
-        var node = path.node
-        var file = state.file;
-        if (t.isIdentifier(node.callee, { name: file.importSpecifier })) {
-          var argumentErrorMsg = "hbs should be invoked with a single argument: the template string";
-          if (node.arguments.length !== 1) {
-            throw path.buildCodeFrameError(argumentErrorMsg);
+      Identifier: function(path, state) {
+        if (path.referencesImport('htmlbars-inline-precompile', 'default')) {
+          var parent = path.parentPath;
+
+          var template;
+          if (parent.isCallExpression({ callee: path.node })) {
+            var argumentErrorMsg = "hbs should be invoked with a single argument: the template string";
+            if (parent.node.arguments.length !== 1) {
+              throw parent.buildCodeFrameError(argumentErrorMsg);
+            }
+
+            template = parent.node.arguments[0].value;
+            if (typeof template !== "string") {
+              throw parent.buildCodeFrameError(argumentErrorMsg);
+            }
+
+          } else if (parent.isTaggedTemplateExpression({ tag: path.node })) {
+            if (parent.node.quasi.expressions.length) {
+              throw parent.buildCodeFrameError("placeholders inside a tagged template string are not supported");
+            }
+
+            template = parent.node.quasi.quasis.map(function(quasi) {
+              return quasi.value.cooked;
+            }).join("");
+
+          } else {
+            return;
           }
 
-          var template = node.arguments[0].value;
-          if (typeof template !== "string") {
-            throw path.buildCodeFrameError(argumentErrorMsg);
-          }
+          var compiledTemplateString = "Ember.HTMLBars.template(" + state.opts.precompile(template) + ")";
 
-          return replaceNodeWithPrecompiledTemplate(state.opts.precompile, path, template);
+          parent.replaceWithSourceString(compiledTemplateString);
         }
       },
-
-      TaggedTemplateExpression: function(path, state) {
-        var node = path.node
-        var file = state.file;
-        if (t.isIdentifier(node.tag, { name: file.importSpecifier })) {
-          if (node.quasi.expressions.length) {
-            throw path.buildCodeFrameError("placeholders inside a tagged template string are not supported");
-          }
-
-          var template = node.quasi.quasis.map(function(quasi) {
-            return quasi.value.cooked;
-          }).join("");
-
-          return replaceNodeWithPrecompiledTemplate(state.opts.precompile, path, template);
-        }
-      }
     }
   };
 };
