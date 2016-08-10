@@ -1,5 +1,7 @@
-module.exports = function(precompile) {
-  return function(babel) {
+module.exports = function(precompile, _options) {
+  var options = _options || {};
+
+  function htmlbarsInlineCompilerPlugin(babel) {
     var t = babel.types;
 
     var replaceNodeWithPrecompiledTemplate = function(node, template) {
@@ -73,4 +75,20 @@ module.exports = function(precompile) {
       }
     });
   }
+
+  // used by broccoli-babel-transpiler to use this packages
+  // files and deps as part of the cache key (when deps or
+  // implementation changes it will bust the cache for already
+  // transpiled files)
+  htmlbarsInlineCompilerPlugin.baseDir = function() {
+    return __dirname;
+  };
+
+  // used by broccoli-babel-transpiler to bust the cache when
+  // the template compiler being used changes
+  htmlbarsInlineCompilerPlugin.cacheKey = function() {
+    return options.cacheKey;
+  };
+
+  return htmlbarsInlineCompilerPlugin;
 };
