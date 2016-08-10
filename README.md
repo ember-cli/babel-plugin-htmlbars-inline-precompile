@@ -66,9 +66,13 @@ test("inline templates ftw", function(assert) {
 var HTMLBarsCompiler = require('./bower_components/ember/ember-template-compiler');
 var HTMLBarsInlinePrecompile = require('babel-plugin-htmlbars-inline-precompile');
 
-var pluginConfiguredWithCompiler = HTMLBarsInlinePrecompile(HTMLBarsCompiler.precompile);
+var pluginConfiguredWithCompiler = HTMLBarsInlinePrecompile(HTMLBarsCompiler.precompile, {
+  cacheKey: checksumOfTemplateCompilerContents
+});
 
 require('babel').transform("code", {
   plugins: [ pluginConfiguredWithCompiler ]
 });
 ```
+
+The provided `cacheKey` option is used to invalidate the broccoli-babel-transpiler cache.
