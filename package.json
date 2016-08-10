@@ -10,6 +10,6 @@
   "license": "MIT",
   "devDependencies": {
     "babel-core": "^6.7.4",
-    "mocha": "^2.2.4"
+    "mocha": "^3.0.2"
   }
 }
