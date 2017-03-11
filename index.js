@@ -1,5 +1,7 @@
+'use strict';
+
 module.exports = function(babel) {
-  var t = babel.types;
+  let t = babel.types;
 
   return {
     visitor: {
@@ -15,13 +17,13 @@ module.exports = function(babel) {
       },
 
       ImportDeclaration: function(path, state) {
-        var node = path.node;
+        let node = path.node;
         if (t.isLiteral(node.source, { value: "htmlbars-inline-precompile" })) {
-          var first = node.specifiers && node.specifiers[0];
+          let first = node.specifiers && node.specifiers[0];
           if (!t.isImportDefaultSpecifier(first)) {
-            var input = state.file.code;
-            var usedImportStatement = input.slice(node.start, node.end);
-            var msg = "Only `import hbs from 'htmlbars-inline-precompile'` is supported. You used: `" + usedImportStatement + "`";
+            let input = state.file.code;
+            let usedImportStatement = input.slice(node.start, node.end);
+            let msg = `Only \`import hbs from 'htmlbars-inline-precompile'\` is supported. You used: \`${usedImportStatement}\``;
             throw path.buildCodeFrameError(msg);
           }
 
@@ -31,11 +33,11 @@ module.exports = function(babel) {
 
       Identifier: function(path, state) {
         if (path.referencesImport('htmlbars-inline-precompile', 'default')) {
-          var parent = path.parentPath;
+          let parent = path.parentPath;
 
-          var template;
+          let template;
           if (parent.isCallExpression({ callee: path.node })) {
-            var argumentErrorMsg = "hbs should be invoked with a single argument: the template string";
+            let argumentErrorMsg = "hbs should be invoked with a single argument: the template string";
             if (parent.node.arguments.length !== 1) {
               throw parent.buildCodeFrameError(argumentErrorMsg);
             }
@@ -58,7 +60,7 @@ module.exports = function(babel) {
             return;
           }
 
-          var compiledTemplateString = "Ember.HTMLBars.template(" + state.opts.precompile(template) + ")";
+          let compiledTemplateString = `Ember.HTMLBars.template(${state.opts.precompile(template)})`;
 
           parent.replaceWithSourceString(compiledTemplateString);
         }
@@ -66,3 +68,5 @@ module.exports = function(babel) {
     }
   };
 };
+
+module.exports.baseDir = function() { return __dirname; };

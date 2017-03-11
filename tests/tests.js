@@ -1,7 +1,10 @@
-var assert = require('assert');
+'use strict';
 
-var babel = require('babel-core');
-var HTMLBarsInlinePrecompile = require('../index');
+const assert = require('assert');
+const path = require('path');
+
+const babel = require('babel-core');
+const HTMLBarsInlinePrecompile = require('../index');
 
 function transform(code, precompile) {
   return babel.transform(code, {
@@ -13,7 +16,7 @@ function transform(code, precompile) {
 
 describe("htmlbars-inline-precompile", function() {
   it("strips import statement for 'htmlbars-inline-precompile' module", function() {
-    var transformed = transform("import hbs from 'htmlbars-inline-precompile';\nimport Ember from 'ember';");
+    let transformed = transform("import hbs from 'htmlbars-inline-precompile';\nimport Ember from 'ember';");
 
     assert.equal(transformed, "import Ember from 'ember';", "strips import statement");
   });
@@ -31,7 +34,7 @@ describe("htmlbars-inline-precompile", function() {
 
 
   it("replaces tagged template expressions with precompiled version", function() {
-    var transformed = transform("import hbs from 'htmlbars-inline-precompile';\nvar compiled = hbs`hello`;", function(template) {
+    let transformed = transform("import hbs from 'htmlbars-inline-precompile';\nvar compiled = hbs`hello`;", function(template) {
       return "precompiled(" + template + ")";
     });
 
@@ -39,7 +42,7 @@ describe("htmlbars-inline-precompile", function() {
   });
 
   it("doesn't replace unrelated tagged template strings", function() {
-    var transformed = transform('import hbs from "htmlbars-inline-precompile";\nvar compiled = anotherTag`hello`;', function(template) {
+    let transformed = transform('import hbs from "htmlbars-inline-precompile";\nvar compiled = anotherTag`hello`;', function(template) {
       return "precompiled(" + template + ")";
     });
 
@@ -52,9 +55,15 @@ describe("htmlbars-inline-precompile", function() {
     }, /placeholders inside a tagged template string are not supported/);
   });
 
+  describe('caching', function() {
+    it('include `baseDir` function for caching', function() {
+      assert.equal(HTMLBarsInlinePrecompile.baseDir(), path.resolve(__dirname, '..'));
+    });
+  });
+
   describe('single string argument', function() {
     it("works with a plain string as parameter hbs('string')", function() {
-      var transformed = transform("import hbs from 'htmlbars-inline-precompile';\nvar compiled = hbs('hello');", function(template) {
+      let transformed = transform("import hbs from 'htmlbars-inline-precompile';\nvar compiled = hbs('hello');", function(template) {
         return "precompiled(" + template + ")";
       });
 
