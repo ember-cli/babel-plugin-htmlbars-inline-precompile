@@ -66,3 +66,5 @@ module.exports = function(babel) {
     }
   };
 };
+
+module.exports.baseDir = function() { return __dirname; };

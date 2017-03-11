@@ -1,4 +1,5 @@
 var assert = require('assert');
+var path = require('path');
 
 var babel = require('babel-core');
 var HTMLBarsInlinePrecompile = require('../index');
@@ -50,6 +51,12 @@ describe("htmlbars-inline-precompile", function() {
     assert.throws(function() {
       transform("import hbs from 'htmlbars-inline-precompile';\nvar compiled = hbs`string ${value}`");
     }, /placeholders inside a tagged template string are not supported/);
+  });
+
+  describe('caching', function() {
+    it('include `baseDir` function for caching', function() {
+      assert.equal(HTMLBarsInlinePrecompile.baseDir(), path.resolve(__dirname, '..'));
+    });
   });
 
   describe('single string argument', function() {
