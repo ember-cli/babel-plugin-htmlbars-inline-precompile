@@ -5,6 +5,7 @@ const path = require('path');
 
 const babel = require('babel-core');
 const HTMLBarsInlinePrecompile = require('../index');
+const TransformTemplateLiterals = require('babel-plugin-transform-es2015-template-literals');
 
 describe("htmlbars-inline-precompile", function() {
   let precompile, plugins;
@@ -44,13 +45,19 @@ describe("htmlbars-inline-precompile", function() {
     }
   });
 
-
   it("replaces tagged template expressions with precompiled version", function() {
     precompile = template => `precompiled(${template})`;
 
     let transformed = transform("import hbs from 'htmlbars-inline-precompile';\nvar compiled = hbs`hello`;");
 
     assert.equal(transformed, "var compiled = Ember.HTMLBars.template(precompiled(hello));", "tagged template is replaced");
+  });
+
+  it("replaces tagged template expressions when before babel-plugin-transform-es2015-template-literals", function() {
+    plugins.push([TransformTemplateLiterals]);
+    let transformed = transform("import hbs from 'htmlbars-inline-precompile';\nvar compiled = hbs`hello`;");
+
+    assert.equal(transformed, "var compiled = Ember.HTMLBars.template(HELLO);", "tagged template is replaced");
   });
 
   it("doesn't replace unrelated tagged template strings", function() {
