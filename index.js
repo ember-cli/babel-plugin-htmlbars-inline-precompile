@@ -31,39 +31,41 @@ module.exports = function(babel) {
         }
       },
 
-      Identifier: function(path, state) {
-        if (path.referencesImport('htmlbars-inline-precompile', 'default')) {
-          let parent = path.parentPath;
-
-          let template;
-          if (parent.isCallExpression({ callee: path.node })) {
-            let argumentErrorMsg = "hbs should be invoked with a single argument: the template string";
-            if (parent.node.arguments.length !== 1) {
-              throw parent.buildCodeFrameError(argumentErrorMsg);
-            }
-
-            template = parent.node.arguments[0].value;
-            if (typeof template !== "string") {
-              throw parent.buildCodeFrameError(argumentErrorMsg);
-            }
-
-          } else if (parent.isTaggedTemplateExpression({ tag: path.node })) {
-            if (parent.node.quasi.expressions.length) {
-              throw parent.buildCodeFrameError("placeholders inside a tagged template string are not supported");
-            }
-
-            template = parent.node.quasi.quasis.map(function(quasi) {
-              return quasi.value.cooked;
-            }).join("");
-
-          } else {
-            return;
-          }
-
-          let compiledTemplateString = `Ember.HTMLBars.template(${state.opts.precompile(template)})`;
-
-          parent.replaceWithSourceString(compiledTemplateString);
+      TaggedTemplateExpression(path, state) {
+        let tagPath = path.get('tag');
+        if (!tagPath.referencesImport('htmlbars-inline-precompile', 'default')) {
+          return;
         }
+
+        if (path.node.quasi.expressions.length) {
+          throw path.buildCodeFrameError("placeholders inside a tagged template string are not supported");
+        }
+
+        let template = path.node.quasi.quasis.map(quasi => quasi.value.cooked).join('');
+        let compiledTemplateString = `Ember.HTMLBars.template(${state.opts.precompile(template)})`;
+
+        path.replaceWithSourceString(compiledTemplateString);
+      },
+
+      CallExpression(path, state) {
+        let calleePath = path.get('callee');
+        if (!calleePath.referencesImport('htmlbars-inline-precompile', 'default')) {
+          return;
+        }
+
+        let argumentErrorMsg = "hbs should be invoked with a single argument: the template string";
+        if (path.node.arguments.length !== 1) {
+          throw path.buildCodeFrameError(argumentErrorMsg);
+        }
+
+        let template = path.node.arguments[0].value;
+        if (typeof template !== "string") {
+          throw path.buildCodeFrameError(argumentErrorMsg);
+        }
+
+        let compiledTemplateString = `Ember.HTMLBars.template(${state.opts.precompile(template)})`;
+
+        path.replaceWithSourceString(compiledTemplateString);
       },
     }
   };
