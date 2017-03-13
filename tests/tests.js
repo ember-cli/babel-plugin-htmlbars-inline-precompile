@@ -54,6 +54,19 @@ describe("htmlbars-inline-precompile", function() {
     assert.equal(transformed, "var compiled = Ember.HTMLBars.template(precompiled(hello));", "tagged template is replaced");
   });
 
+  it("works with multiple imports", function() {
+    let transformed = transform(`
+      import hbs from 'htmlbars-inline-precompile';
+      import otherHbs from 'htmlbars-inline-precompile';
+      let a = hbs\`hello\`;
+      let b = otherHbs\`hello\`;
+    `);
+
+    let expected = `let a = Ember.HTMLBars.template(HELLO);\nlet b = Ember.HTMLBars.template(HELLO);`;
+
+    assert.equal(transformed, expected, "tagged template is replaced");
+  });
+
   it("works properly when used along with modules transform", function() {
     plugins.push([TransformModules]);
     let transformed = transform("import hbs from 'htmlbars-inline-precompile';\nvar compiled = hbs`hello`;");
