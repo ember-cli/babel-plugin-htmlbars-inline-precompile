@@ -5,17 +5,6 @@ module.exports = function(babel) {
 
   return {
     visitor: {
-      Program: {
-        enter: function(path, state) {
-          state.hbsImports = [];
-        },
-        exit: function(path, state) {
-          state.hbsImports.forEach(function(path) {
-            path.remove();
-          });
-        },
-      },
-
       ImportDeclaration: function(path, state) {
         let node = path.node;
         if (t.isLiteral(node.source, { value: "htmlbars-inline-precompile" })) {
@@ -27,13 +16,15 @@ module.exports = function(babel) {
             throw path.buildCodeFrameError(msg);
           }
 
-          state.hbsImports.push(path);
+          state.importId = state.importId || path.scope.generateUidIdentifierBasedOnNode(path.node.id);
+          path.scope.rename(first.local.name, state.importId.name);
+          path.remove();
         }
       },
 
       TaggedTemplateExpression(path, state) {
         let tagPath = path.get('tag');
-        if (!tagPath.referencesImport('htmlbars-inline-precompile', 'default')) {
+        if (tagPath.node.name !== state.importId.name) {
           return;
         }
 
@@ -49,7 +40,7 @@ module.exports = function(babel) {
 
       CallExpression(path, state) {
         let calleePath = path.get('callee');
-        if (!calleePath.referencesImport('htmlbars-inline-precompile', 'default')) {
+        if (calleePath.node.name !== state.importId.name) {
           return;
         }
 
