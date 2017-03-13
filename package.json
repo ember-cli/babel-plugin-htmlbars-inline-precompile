@@ -1,6 +1,6 @@
 {
   "name": "babel-plugin-htmlbars-inline-precompile",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "Babel plugin to replace tagged template strings with precompiled HTMLBars templates",
   "scripts": {
     "test": "mocha tests"
