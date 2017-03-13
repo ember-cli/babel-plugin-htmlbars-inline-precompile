@@ -23,6 +23,8 @@ module.exports = function(babel) {
       },
 
       TaggedTemplateExpression(path, state) {
+        if (!state.importId) { return; }
+
         let tagPath = path.get('tag');
         if (tagPath.node.name !== state.importId.name) {
           return;
@@ -39,6 +41,8 @@ module.exports = function(babel) {
       },
 
       CallExpression(path, state) {
+        if (!state.importId) { return; }
+
         let calleePath = path.get('callee');
         if (calleePath.node.name !== state.importId.name) {
           return;

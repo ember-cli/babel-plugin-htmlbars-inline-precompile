@@ -54,6 +54,11 @@ describe("htmlbars-inline-precompile", function() {
     assert.equal(transformed, "var compiled = Ember.HTMLBars.template(precompiled(hello));", "tagged template is replaced");
   });
 
+  it("does not cause an error when no import is found", function() {
+    transform('something("whatever")');
+    transform('something`whatever`');
+  });
+
   it("works with multiple imports", function() {
     let transformed = transform(`
       import hbs from 'htmlbars-inline-precompile';
