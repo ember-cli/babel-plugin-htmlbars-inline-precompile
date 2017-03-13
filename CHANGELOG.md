@@ -1,5 +1,12 @@
 # Change Log
 
+## [v0.2.3](https://github.com/ember-cli/babel-plugin-htmlbars-inline-precompile/tree/v0.2.3) (2017-03-13)
+[Full Changelog](https://github.com/ember-cli/babel-plugin-htmlbars-inline-precompile/compare/v0.2.2...v0.2.3)
+
+**Merged pull requests:**
+
+- Avoid error when processing expressions before import has ocurred. [\#23](https://github.com/ember-cli/babel-plugin-htmlbars-inline-precompile/pull/23) ([rwjblue](https://github.com/rwjblue))
+
 ## [v0.2.2](https://github.com/ember-cli/babel-plugin-htmlbars-inline-precompile/tree/v0.2.2) (2017-03-13)
 [Full Changelog](https://github.com/ember-cli/babel-plugin-htmlbars-inline-precompile/compare/v0.2.1...v0.2.2)
 
