@@ -3,6 +3,7 @@ var path = require('path');
 
 var babel = require('babel-core');
 var HTMLBarsInlinePrecompile = require('../index');
+var crypto = require('crypto');
 
 var transform;
 
@@ -61,10 +62,12 @@ describe("htmlbars-inline-precompile", function() {
   });
 
   describe('caching', function() {
-    it('passes through second argument as `cacheKey`', function() {
+    it('captures an md4 hash of the `cacheKey` in its second arg', function() {
       var plugin = HTMLBarsInlinePrecompile(function() {}, { cacheKey: 'asdfasdf' });
 
-      assert.equal(plugin.cacheKey(), 'asdfasdf');
+      var digest = crypto.createHash('md5').update('asdfasdf').digest("hex");
+
+      assert.equal(plugin.cacheKey(), digest);
     });
 
     it('include `baseDir` function for caching', function() {

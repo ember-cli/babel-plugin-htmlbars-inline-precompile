@@ -1,5 +1,15 @@
+var crypto = require('crypto');
+
 module.exports = function(precompile, _options) {
   var options = _options || {};
+  var cacheKey = options.cacheKey;
+
+  // cacheKey can be very large; do not retain it
+  options = _options = null;
+
+  if (typeof cacheKey === 'string') {
+    cacheKey = crypto.createHash('md5').update(cacheKey).digest('hex');
+  }
 
   function htmlbarsInlineCompilerPlugin(babel) {
     var t = babel.types;
@@ -87,7 +97,7 @@ module.exports = function(precompile, _options) {
   // used by broccoli-babel-transpiler to bust the cache when
   // the template compiler being used changes
   htmlbarsInlineCompilerPlugin.cacheKey = function() {
-    return options.cacheKey;
+    return cacheKey;
   };
 
   return htmlbarsInlineCompilerPlugin;
