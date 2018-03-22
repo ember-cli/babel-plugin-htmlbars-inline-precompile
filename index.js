@@ -7,12 +7,16 @@ module.exports = function(babel) {
     visitor: {
       ImportDeclaration: function(path, state) {
         let node = path.node;
-        if (t.isLiteral(node.source, { value: "htmlbars-inline-precompile" })) {
+
+        let modulePaths = state.opts.modulePaths || ["htmlbars-inline-precompile"];
+        let matchingModulePath = modulePaths.find(value => t.isLiteral(node.source, { value }));
+
+        if (matchingModulePath) {
           let first = node.specifiers && node.specifiers[0];
           if (!t.isImportDefaultSpecifier(first)) {
             let input = state.file.code;
             let usedImportStatement = input.slice(node.start, node.end);
-            let msg = `Only \`import hbs from 'htmlbars-inline-precompile'\` is supported. You used: \`${usedImportStatement}\``;
+            let msg = `Only \`import hbs from '${matchingModulePath}'\` is supported. You used: \`${usedImportStatement}\``;
             throw path.buildCodeFrameError(msg);
           }
 
