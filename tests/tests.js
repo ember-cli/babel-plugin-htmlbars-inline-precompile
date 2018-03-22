@@ -46,6 +46,14 @@ describe("htmlbars-inline-precompile", function() {
     expect(transformed).toEqual("var compiled = Ember.HTMLBars.template(precompiled(hello));", "tagged template is replaced");
   });
 
+  it("replaces tagged template expressions with precompiled version for custom import paths", function() {
+    plugins[0][1].modulePaths = ['ember-cli-htmlbars-inline-precompile'];
+
+    let transformed = transform("import hbs from 'ember-cli-htmlbars-inline-precompile';\nvar compiled = hbs`hello`;");
+
+    expect(transformed).toEqual("var compiled = Ember.HTMLBars.template(precompiled(hello));");
+  });
+
   it("does not cause an error when no import is found", function() {
     expect(() => transform('something("whatever")')).not.toThrow();
     expect(() => transform('something`whatever`')).not.toThrow();
