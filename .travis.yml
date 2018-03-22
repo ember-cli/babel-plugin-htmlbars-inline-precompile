@@ -20,7 +20,7 @@ install:
   - npm install
 
 script:
-  - npm test
+  - npm test -- --coverage
 
 before_deploy:
   - npm install -g auto-dist-tag
