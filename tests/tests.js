@@ -8,7 +8,7 @@ const TransformTemplateLiterals = require('babel-plugin-transform-es2015-templat
 const TransformModules = require('babel-plugin-transform-es2015-modules-amd');
 
 describe("htmlbars-inline-precompile", function() {
-  let precompile, plugins;
+  let plugins;
 
   function transform(code) {
     return babel.transform(code, {
@@ -17,12 +17,10 @@ describe("htmlbars-inline-precompile", function() {
   }
 
   beforeEach(function() {
-    precompile = (template) => template.toUpperCase();
-
     plugins = [
       [HTMLBarsInlinePrecompile, {
-        precompile: function() {
-          return precompile.apply(this, arguments);
+        precompile(template) {
+          return `precompiled(${template})`;
         }
       }],
     ];
@@ -43,8 +41,6 @@ describe("htmlbars-inline-precompile", function() {
   });
 
   it("replaces tagged template expressions with precompiled version", function() {
-    precompile = template => `precompiled(${template})`;
-
     let transformed = transform("import hbs from 'htmlbars-inline-precompile';\nvar compiled = hbs`hello`;");
 
     expect(transformed).toEqual("var compiled = Ember.HTMLBars.template(precompiled(hello));", "tagged template is replaced");
@@ -63,7 +59,7 @@ describe("htmlbars-inline-precompile", function() {
       let b = otherHbs\`hello\`;
     `);
 
-    let expected = `let a = Ember.HTMLBars.template(HELLO);\nlet b = Ember.HTMLBars.template(HELLO);`;
+    let expected = `let a = Ember.HTMLBars.template(precompiled(hello));\nlet b = Ember.HTMLBars.template(precompiled(hello));`;
 
     expect(transformed).toEqual(expected, "tagged template is replaced");
   });
@@ -72,26 +68,24 @@ describe("htmlbars-inline-precompile", function() {
     plugins.push([TransformModules]);
     let transformed = transform("import hbs from 'htmlbars-inline-precompile';\nvar compiled = hbs`hello`;");
 
-    expect(transformed).toEqual(`define([], function () {\n  'use strict';\n\n  var compiled = Ember.HTMLBars.template(HELLO);\n});`, "tagged template is replaced");
+    expect(transformed).toEqual(`define([], function () {\n  'use strict';\n\n  var compiled = Ember.HTMLBars.template(precompiled(hello));\n});`, "tagged template is replaced");
   });
 
   it("works properly when used after modules transform", function() {
     plugins.unshift([TransformModules]);
     let transformed = transform("import hbs from 'htmlbars-inline-precompile';\nvar compiled = hbs`hello`;");
 
-    expect(transformed).toEqual(`define([], function () {\n  'use strict';\n\n  var compiled = Ember.HTMLBars.template(HELLO);\n});`, "tagged template is replaced");
+    expect(transformed).toEqual(`define([], function () {\n  'use strict';\n\n  var compiled = Ember.HTMLBars.template(precompiled(hello));\n});`, "tagged template is replaced");
   });
 
   it("replaces tagged template expressions when before babel-plugin-transform-es2015-template-literals", function() {
     plugins.push([TransformTemplateLiterals]);
     let transformed = transform("import hbs from 'htmlbars-inline-precompile';\nvar compiled = hbs`hello`;");
 
-    expect(transformed).toEqual("var compiled = Ember.HTMLBars.template(HELLO);", "tagged template is replaced");
+    expect(transformed).toEqual("var compiled = Ember.HTMLBars.template(precompiled(hello));", "tagged template is replaced");
   });
 
   it("doesn't replace unrelated tagged template strings", function() {
-    precompile = template => `precompiled(${template})`;
-
     let transformed = transform('import hbs from "htmlbars-inline-precompile";\nvar compiled = anotherTag`hello`;');
 
     expect(transformed).toEqual("var compiled = anotherTag`hello`;", "other tagged template strings are not touched");
@@ -110,8 +104,6 @@ describe("htmlbars-inline-precompile", function() {
 
   describe('single string argument', function() {
     it("works with a plain string as parameter hbs('string')", function() {
-      precompile = template => `precompiled(${template})`;
-
       let transformed = transform("import hbs from 'htmlbars-inline-precompile';\nvar compiled = hbs('hello');");
 
       expect(transformed).toEqual("var compiled = Ember.HTMLBars.template(precompiled(hello));", "tagged template is replaced");
