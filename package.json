@@ -15,11 +15,14 @@
     "babel-core": "^6.7.4",
     "babel-plugin-transform-es2015-modules-amd": "^6.24.0",
     "babel-plugin-transform-es2015-template-literals": "^6.22.0",
-    "jest": "^21.0.0"
+    "eslint-plugin-node": "^6.0.1",
+    "jest": "^21.0.0",
+    "jest-runner-eslint": "^0.4.0"
   },
   "jest": {
-    "testMatch": [
-      "<rootDir>/tests/**/*.js"
+    "projects": [
+      "<rootDir>/jest-test.config.js",
+      "<rootDir>/jest-eslint.config.js"
     ]
   }
 }
