@@ -1,5 +1,7 @@
 'use strict';
 
+const parseModuleName = require('./lib/parse-module-name');
+
 module.exports = function(babel) {
   let t = babel.types;
 
@@ -39,7 +41,16 @@ module.exports = function(babel) {
         }
 
         let template = path.node.quasi.quasis.map(quasi => quasi.value.cooked).join('');
-        let compiledTemplateString = `Ember.HTMLBars.template(${state.opts.precompile(template)})`;
+
+        let options = {
+          meta: {}
+        }
+
+        if (state.file.opts.filename.includes('-components')) {
+          options.meta.moduleName = parseModuleName(state.file.opts.filename);
+        }
+
+        let compiledTemplateString = `Ember.HTMLBars.template(${state.opts.precompile(template, options)})`;
 
         path.replaceWithSourceString(compiledTemplateString);
       },
