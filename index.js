@@ -47,13 +47,10 @@ module.exports = function(babel) {
         }
 
         let filename = state.file.opts.filename;
-        let filenameParts = filename.split('/');
-        filenameParts.splice(0, 1);
+        let moduleName = parseModuleName(filename);
 
-        if (filename.includes('-components')) {
-          options.meta.moduleName = parseModuleName(filename);
-        } else if (filenameParts[2] === 'components' && filenameParts.length > 5) {
-          options.meta.moduleName = parseModuleName(filename);
+        if (moduleName) {
+          options.meta.moduleName = moduleName;
         }
 
         let compiledTemplateString = `Ember.HTMLBars.template(${state.opts.precompile(template, options)})`;
