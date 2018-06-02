@@ -1,5 +1,44 @@
 # Change Log
 
+## [v0.2.5](https://github.com/ember-cli/babel-plugin-htmlbars-inline-precompile/tree/v0.2.5) (2018-06-02)
+[Full Changelog](https://github.com/ember-cli/babel-plugin-htmlbars-inline-precompile/compare/v0.2.4...v0.2.5)
+
+**Implemented enhancements:**
+
+- Pass through `content` to `precompile`. [\#37](https://github.com/ember-cli/babel-plugin-htmlbars-inline-precompile/pull/37) ([rwjblue](https://github.com/rwjblue))
+
+**Merged pull requests:**
+
+- Update jest-runner-eslint to the latest version 🚀 [\#35](https://github.com/ember-cli/babel-plugin-htmlbars-inline-precompile/pull/35) ([greenkeeper[bot]](https://github.com/apps/greenkeeper))
+- Update jest-runner-eslint to the latest version 🚀 [\#34](https://github.com/ember-cli/babel-plugin-htmlbars-inline-precompile/pull/34) ([greenkeeper[bot]](https://github.com/apps/greenkeeper))
+- Use Jest to run ESLint checks [\#32](https://github.com/ember-cli/babel-plugin-htmlbars-inline-precompile/pull/32) ([Turbo87](https://github.com/Turbo87))
+- Cleanup TravisCI config [\#31](https://github.com/ember-cli/babel-plugin-htmlbars-inline-precompile/pull/31) ([Turbo87](https://github.com/Turbo87))
+
+## [v0.2.4](https://github.com/ember-cli/babel-plugin-htmlbars-inline-precompile/tree/v0.2.4) (2018-03-22)
+[Full Changelog](https://github.com/ember-cli/babel-plugin-htmlbars-inline-precompile/compare/v0.1.1...v0.2.4)
+
+**Implemented enhancements:**
+
+- Allow `modulePaths` configuration [\#30](https://github.com/ember-cli/babel-plugin-htmlbars-inline-precompile/pull/30) ([Turbo87](https://github.com/Turbo87))
+
+**Merged pull requests:**
+
+-  Replace `mocha` with `jest` [\#29](https://github.com/ember-cli/babel-plugin-htmlbars-inline-precompile/pull/29) ([Turbo87](https://github.com/Turbo87))
+- Update `yarn.lock` file [\#28](https://github.com/ember-cli/babel-plugin-htmlbars-inline-precompile/pull/28) ([Turbo87](https://github.com/Turbo87))
+- Update mocha to the latest version 🚀 [\#27](https://github.com/ember-cli/babel-plugin-htmlbars-inline-precompile/pull/27) ([greenkeeper[bot]](https://github.com/apps/greenkeeper))
+- Update mocha to the latest version 🚀 [\#26](https://github.com/ember-cli/babel-plugin-htmlbars-inline-precompile/pull/26) ([greenkeeper[bot]](https://github.com/apps/greenkeeper))
+
+## [v0.1.1](https://github.com/ember-cli/babel-plugin-htmlbars-inline-precompile/tree/v0.1.1) (2017-07-21)
+[Full Changelog](https://github.com/ember-cli/babel-plugin-htmlbars-inline-precompile/compare/v0.2.3...v0.1.1)
+
+**Implemented enhancements:**
+
+- CI: Use "auto-dist-tag" for deployment [\#24](https://github.com/ember-cli/babel-plugin-htmlbars-inline-precompile/pull/24) ([Turbo87](https://github.com/Turbo87))
+
+**Merged pull requests:**
+
+- md5 cacheKey in v0.1.x [\#25](https://github.com/ember-cli/babel-plugin-htmlbars-inline-precompile/pull/25) ([hjdivad](https://github.com/hjdivad))
+
 ## [v0.2.3](https://github.com/ember-cli/babel-plugin-htmlbars-inline-precompile/tree/v0.2.3) (2017-03-13)
 [Full Changelog](https://github.com/ember-cli/babel-plugin-htmlbars-inline-precompile/compare/v0.2.2...v0.2.3)
 
