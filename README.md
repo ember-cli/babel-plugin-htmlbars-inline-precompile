@@ -62,8 +62,11 @@ test("inline templates ftw", function(assert) {
 
 ## Usage
 
+The `babel-plugin-htmlbars-inline-precompile` Babel plugin requires a `precompile` function to be specified.
+This usually will be the `template-precompiler` that ships with Ember Source.
+
 ``` js
-var HTMLBarsCompiler = require('./bower_components/ember/ember-template-compiler');
+var HTMLBarsCompiler = require('ember-source/dist/ember-template-compiler');
 var HTMLBarsInlinePrecompile = require('babel-plugin-htmlbars-inline-precompile');
 
 require('babel').transform("code", {
@@ -71,4 +74,18 @@ require('babel').transform("code", {
     [HTMLBarsInlinePrecompile, {precompile: HTMLBarsCompiler.precompile}],
   ],
 });
+```
+
+For use with Babel outside of Ember, a `.babelrc.js` file will be needed:
+
+```js
+const HTMLBarsCompiler = require('ember-source/dist/ember-template-compiler');
+
+module.exports = {
+  "plugins": [
+    ["htmlbars-inline-precompile", {
+      precompile: HTMLBarsCompiler.precompile
+    }]
+  ]
+}
 ```
