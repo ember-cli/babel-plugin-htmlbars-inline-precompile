@@ -3,6 +3,16 @@
 module.exports = function(babel) {
   let t = babel.types;
 
+  function compileTemplate(precompile, template) {
+    let options = {
+      contents: template
+    }
+
+    let compiledTemplateString = `Ember.HTMLBars.template(${precompile(template, options)})`;
+
+    return compiledTemplateString;
+  }
+
   return {
     visitor: {
       ImportDeclaration: function(path, state) {
@@ -39,9 +49,8 @@ module.exports = function(babel) {
         }
 
         let template = path.node.quasi.quasis.map(quasi => quasi.value.cooked).join('');
-        let compiledTemplateString = `Ember.HTMLBars.template(${state.opts.precompile(template)})`;
 
-        path.replaceWithSourceString(compiledTemplateString);
+        path.replaceWithSourceString(compileTemplate(state.opts.precompile, template, state.file.opts.filename));
       },
 
       CallExpression(path, state) {
@@ -62,9 +71,7 @@ module.exports = function(babel) {
           throw path.buildCodeFrameError(argumentErrorMsg);
         }
 
-        let compiledTemplateString = `Ember.HTMLBars.template(${state.opts.precompile(template)})`;
-
-        path.replaceWithSourceString(compiledTemplateString);
+        path.replaceWithSourceString(compileTemplate(state.opts.precompile, template, state.file.opts.filename));
       },
     }
   };

@@ -8,22 +8,43 @@ const TransformTemplateLiterals = require('babel-plugin-transform-es2015-templat
 const TransformModules = require('babel-plugin-transform-es2015-modules-amd');
 
 describe("htmlbars-inline-precompile", function() {
-  let plugins;
+  let plugins, optionsReceived;
 
   function transform(code) {
     return babel.transform(code, {
+      filename: 'foo-bar.js',
       plugins
     }).code.trim();
   }
 
   beforeEach(function() {
+    optionsReceived = undefined;
     plugins = [
       [HTMLBarsInlinePrecompile, {
-        precompile(template) {
+        precompile(template, options) {
+          optionsReceived = options;
           return `precompiled(${template})`;
         }
       }],
     ];
+  });
+
+  it('passes options when used as a call expression', function() {
+    let source = 'hello';
+    transform(`import hbs from 'htmlbars-inline-precompile';\nvar compiled = hbs('${source}');`);
+
+    expect(optionsReceived).toEqual({
+      contents: source,
+    });
+  });
+
+  it('passes options when used as a tagged template string', function() {
+    let source = 'hello';
+    transform(`import hbs from 'htmlbars-inline-precompile';\nvar compiled = hbs\`${source}\`;`);
+
+    expect(optionsReceived).toEqual({
+      contents: source,
+    });
   });
 
   it("strips import statement for 'htmlbars-inline-precompile' module", function() {
