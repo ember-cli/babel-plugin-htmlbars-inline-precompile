@@ -77,4 +77,10 @@ module.exports = function(babel) {
   };
 };
 
-module.exports.baseDir = function() { return __dirname; };
+module.exports._parallelBabel = {
+  requireFile: __filename
+};
+
+module.exports.baseDir = function() {
+  return __dirname;
+};
