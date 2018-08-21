@@ -63,8 +63,6 @@ module.exports = function(babel) {
           options.meta.moduleName = moduleName;
         }
 
-        let compiledTemplateString = `Ember.HTMLBars.template(${state.opts.precompile(template, options)})`;
-
         path.replaceWithSourceString(compileTemplate(state.opts.precompile, template, state.file.opts.filename));
       },
 
