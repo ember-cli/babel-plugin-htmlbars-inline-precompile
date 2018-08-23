@@ -38,4 +38,16 @@ describe('parse-module-name helper', function() {
       parseModuleName('emberconf/tests/integration/components/foo-bar/component-test.js')
     ).toEqual(null);
   });
+
+  it('should return null when parsing a named module at the top level of the routes collection', function() {
+    const actual = parseModuleName('emberconf/src/ui/routes/foo.js');
+
+    expect(actual).toEqual(null);
+  });
+
+  it('should return null when parsing a named module at the top level of the components collection', function() {
+    const actual = parseModuleName('emberconf/src/ui/components/foo-bar.js');
+
+    expect(actual).toEqual(null);
+  });
 });
