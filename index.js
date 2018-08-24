@@ -1,5 +1,7 @@
 'use strict';
 
+const parseModuleName = require('./lib/parse-module-name');
+
 module.exports = function(babel) {
   let t = babel.types;
 
@@ -49,6 +51,17 @@ module.exports = function(babel) {
         }
 
         let template = path.node.quasi.quasis.map(quasi => quasi.value.cooked).join('');
+
+        let options = {
+          meta: {}
+        }
+
+        let filename = state.file.opts.filename;
+        let moduleName = parseModuleName(filename);
+
+        if (moduleName) {
+          options.meta.moduleName = moduleName;
+        }
 
         path.replaceWithSourceString(compileTemplate(state.opts.precompile, template, state.file.opts.filename));
       },
