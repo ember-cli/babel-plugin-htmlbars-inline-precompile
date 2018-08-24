@@ -17,7 +17,7 @@ module.exports = function(babel) {
 
   return {
     visitor: {
-      ImportDeclaration: function(path, state) {
+      ImportDeclaration(path, state) {
         let node = path.node;
 
         let modulePaths = state.opts.modulePaths || ["htmlbars-inline-precompile"];
