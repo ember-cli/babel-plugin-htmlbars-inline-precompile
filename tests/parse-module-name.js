@@ -3,6 +3,12 @@
 const parseModuleName = require('../lib/parse-module-name');
 
 describe('parse-module-name helper', function() {
+  it('should be able to take a path and prepend it when using a local component test', function() {
+    expect(
+      parseModuleName('emberconf/src/ui/components/foo-bar/baz/component-test.js', 'baz')
+    ).toEqual('src/ui/components/foo-bar/baz/template.hbs');
+  });
+
   it('should return application template when using a route local -component', function() {
     expect(
       parseModuleName('emberconf/src/ui/routes/application/-components/footer-prompt/component-test.js')
