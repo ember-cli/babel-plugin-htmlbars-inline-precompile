@@ -16,7 +16,7 @@
     "babel-plugin-transform-es2015-modules-amd": "^6.24.1",
     "babel-plugin-transform-es2015-template-literals": "^6.22.0",
     "eslint-plugin-node": "^8.0.0",
-    "jest": "^23.6.0",
+    "jest": "^24.8.0",
     "jest-runner-eslint": "^0.7.4"
   },
   "jest": {
