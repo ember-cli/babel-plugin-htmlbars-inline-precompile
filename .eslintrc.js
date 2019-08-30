@@ -1,19 +1,18 @@
 module.exports = {
   root: true,
   parserOptions: {
-    ecmaVersion: 2016,
+    ecmaVersion: 2017,
   },
-  plugins: ['node'],
+  plugins: ['node', 'prettier'],
   extends: [
     'eslint:recommended',
     'plugin:node/recommended',
+    'plugin:prettier/recommended',
   ],
   env: {
     node: true,
   },
-  rules: {
-    'ember/new-module-imports': 'off',
-  },
+  rules: { },
   overrides: [
     // test files
     {

@@ -6,21 +6,24 @@
   "license": "MIT",
   "author": "Clemens Müller <cmueller.418@gmail.com>",
   "scripts": {
+    "lint": "eslint --cache .",
     "test": "jest"
   },
   "jest": {
     "projects": [
-      "<rootDir>/jest-test.config.js",
-      "<rootDir>/jest-eslint.config.js"
+      "<rootDir>/jest-test.config.js"
     ]
   },
   "devDependencies": {
     "@babel/core": "^7.5.5",
     "@babel/plugin-transform-modules-amd": "^7.5.0",
     "@babel/plugin-transform-template-literals": "^7.4.4",
+    "eslint": "^6.3.0",
+    "eslint-config-prettier": "^6.1.0",
     "eslint-plugin-node": "^9.2.0",
+    "eslint-plugin-prettier": "^3.1.0",
     "jest": "^24.9.0",
-    "jest-runner-eslint": "^0.7.4",
+    "prettier": "^1.18.2",
     "release-it": "^12.2.1",
     "release-it-lerna-changelog": "^1.0.3"
   },
