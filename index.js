@@ -5,14 +5,35 @@ const parseModuleName = require('./lib/parse-module-name');
 module.exports = function(babel) {
   let t = babel.types;
 
-  function compileTemplate(precompile, template) {
-    let options = {
-      contents: template
-    }
+  function compileTemplate(precompile, template, _options) {
+    let options = Object.assign({ contents: template }, _options);
 
     let compiledTemplateString = `Ember.HTMLBars.template(${precompile(template, options)})`;
 
     return compiledTemplateString;
+  }
+
+  function parseObjectExpression(buildError, node) {
+    let result = {};
+
+    node.properties.forEach(property => {
+      if (property.computed || property.key.type !== "Identifier") {
+        throw buildError("hbs can only accept static options");
+      }
+
+      let value;
+      if (property.value.type === "ObjectExpression") {
+        value = parseObjectExpression(buildError, property.value);
+      } else if (["StringLiteral", "NumericLiteral", "BooleanLiteral"].indexOf(property.value.type) > -1) {
+        value = property.value.value;
+      } else {
+        throw buildError("hbs can only accept static options");
+      }
+
+      result[property.key.name] = value;
+    });
+
+    return result;
   }
 
   return {
@@ -63,7 +84,7 @@ module.exports = function(babel) {
           options.meta.moduleName = moduleName;
         }
 
-        path.replaceWithSourceString(compileTemplate(state.opts.precompile, template, state.file.opts.filename));
+        path.replaceWithSourceString(compileTemplate(state.opts.precompile, template));
       },
 
       CallExpression(path, state) {
@@ -74,17 +95,35 @@ module.exports = function(babel) {
           return;
         }
 
-        let argumentErrorMsg = "hbs should be invoked with a single argument: the template string";
-        if (path.node.arguments.length !== 1) {
-          throw path.buildCodeFrameError(argumentErrorMsg);
+        let options;
+
+        let template = path.node.arguments[0];
+        if (template === undefined || typeof template.value !== "string") {
+          throw path.buildCodeFrameError("hbs should be invoked with at least a single argument: the template string");
         }
 
-        let template = path.node.arguments[0].value;
-        if (typeof template !== "string") {
-          throw path.buildCodeFrameError(argumentErrorMsg);
+        switch (path.node.arguments.length) {
+          case 0:
+            throw path.buildCodeFrameError("hbs should be invoked with at least a single argument: the template string");
+          case 1:
+            break;
+          case 2: {
+            let astOptions = path.node.arguments[1];
+            if (astOptions.type !== "ObjectExpression") {
+              throw path.buildCodeFrameError("hbs can only be invoked with 2 arguments: the template string, and any static options");
+            }
+
+            options = parseObjectExpression(path.buildCodeFrameError.bind(path), astOptions);
+
+            break;
+          }
+          default:
+            throw path.buildCodeFrameError("hbs can only be invoked with 2 arguments: the template string, and any static options");
         }
 
-        path.replaceWithSourceString(compileTemplate(state.opts.precompile, template, state.file.opts.filename));
+        let { precompile } = state.opts;
+
+        path.replaceWithSourceString(compileTemplate(precompile, template.value, options));
       },
     }
   };

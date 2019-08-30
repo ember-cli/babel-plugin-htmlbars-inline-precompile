@@ -38,6 +38,19 @@ describe("htmlbars-inline-precompile", function() {
     });
   });
 
+  it('allows static userland options when used as a call expression', function() {
+    let source = 'hello';
+    transform(`import hbs from 'htmlbars-inline-precompile';\nvar compiled = hbs('${source}', { parseOptions: { srcName: 'bar.hbs' }, moduleName: 'foo/bar.hbs', xyz: 123, qux: true });`);
+
+    expect(optionsReceived).toEqual({
+      contents: source,
+      parseOptions: { srcName: 'bar.hbs' },
+      moduleName: 'foo/bar.hbs',
+      xyz: 123,
+      qux: true
+    });
+  });
+
   it('passes options when used as a tagged template string', function() {
     let source = 'hello';
     transform(`import hbs from 'htmlbars-inline-precompile';\nvar compiled = hbs\`${source}\`;`);
@@ -138,19 +151,19 @@ describe("htmlbars-inline-precompile", function() {
       expect(transformed).toEqual("var compiled = Ember.HTMLBars.template(precompiled(hello));", "tagged template is replaced");
     });
 
-    it("warns when more than one argument is passed", function() {
+    it("warns when the second argument is not an object", function() {
       expect(() => transform("import hbs from 'htmlbars-inline-precompile';\nvar compiled = hbs('first', 'second');"))
-        .toThrow(/hbs should be invoked with a single argument: the template string/);
+        .toThrow(/hbs can only be invoked with 2 arguments: the template string, and any static options/);
     });
 
     it("warns when argument is not a string", function() {
       expect(() => transform("import hbs from 'htmlbars-inline-precompile';\nvar compiled = hbs(123);"))
-        .toThrow(/hbs should be invoked with a single argument: the template string/);
+        .toThrow(/hbs should be invoked with at least a single argument: the template string/);
     });
 
     it("warns when no argument is passed", function() {
       expect(() => transform("import hbs from 'htmlbars-inline-precompile';\nvar compiled = hbs();"))
-        .toThrow(/hbs should be invoked with a single argument: the template string/);
+        .toThrow(/hbs should be invoked with at least a single argument: the template string/);
     });
   });
 });
