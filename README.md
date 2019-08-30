@@ -1,66 +1,29 @@
-# babel-plugin-htmlbars-inline-precompile [![Build Status](https://travis-ci.org/ember-cli/babel-plugin-htmlbars-inline-precompile.svg?branch=master)](https://travis-ci.org/ember-cli/babel-plugin-htmlbars-inline-precompile)
+# babel-plugin-htmlbars-inline-precompile
 
-Babel plugin to replace ES6 tagged template strings with the `HTMLBars.precompile`d version of it:
+<a href="https://github.com/ember-cli/babel-plugin-htmlbars-inline-precompile"><img alt="Build Status" src="https://github.com/ember-cli/babel-plugin-htmlbars-inline-precompile/workflows/CI/badge.svg"></a>
 
-``` js
-import hbs from 'htmlbars-inline-precompile';
-
-module("my view");
-
-test("inline templates ftw", function(assert) {
-  var view = Ember.View.create({
-    greeting: "inline template world",
-    template: hbs`
-      <span>hello {{view.greeting}}</span>
-    `
-  });
-
-  view.appendTo('#testing');
-
-  assert.equal(view.$().html().trim(), "<span>hello inline template world</span>");
-});
-```
-
-results in
-
-``` js
-module("my view");
-
-test("inline templates ftw", function(assert) {
-  var view = Ember.View.create({
-    greeting: "inline template world",
-    template: Ember.HTMLBars.template(function() {
-      /* crazy HTMLBars template function stuff */
-    })
-  });
-
-  view.appendTo('#testing');
-
-  assert.equal(view.$().html().trim(), "<span>hello inline template world</span>");
-});
-```
-
-If the template is compact, a normal string can be passed as argument as well:
-
-``` js
-import hbs from 'htmlbars-inline-precompile';
-
-module("my view");
-
-test("inline templates ftw", function(assert) {
-  var view = Ember.View.create({
-    greeting: "inline template world",
-    template: hbs('<h1>{{view.greeting}}</h1>')
-  });
-
-  view.appendTo('#testing');
-
-  assert.equal(view.$().html().trim(), "<h1>inline template world</h1>");
-});
-```
-
+Babel plugin to replace tagged `.hbs` formatted strings with a precompiled version.
 
 ## Usage
+
+Can be used as either a normal function invocation or a tagged template string:
+
+```js
+import hbs from 'htmlbars-inline-precompile';
+
+hbs`some {{handlebarsthingy}}`;
+hbs('some {{handlebarsthingy}}');
+```
+
+When used as a normal function invocation, you can pass additional options (e.g. to configure the resulting template's `moduleName` metadata):
+
+```js
+import hbs from 'htmlbars-inline-precompile';
+
+hbs('some {{handlebarsthingy}}', { moduleName: 'some/path/to/file.hbs' });
+```
+
+## Babel Plugin Usage
 
 ``` js
 var HTMLBarsCompiler = require('./bower_components/ember/ember-template-compiler');
@@ -70,5 +33,45 @@ require('babel').transform("code", {
   plugins: [
     [HTMLBarsInlinePrecompile, {precompile: HTMLBarsCompiler.precompile}],
   ],
+});
+```
+
+### Example
+
+``` js
+import { module, test } from 'qunit';
+import { setupRenderingTest } from 'ember-qunit';
+import { render } from '@ember/test-helpers';
+import hbs from 'htmlbars-inline-precompile';
+
+module("my component", function(hooks) {
+  setupRenderingTest(hooks);
+
+  test('inline templates ftw', async function(assert) {
+    await render(hbs`hello!`);
+
+    assert.dom().hasText('hello!');
+  });
+});
+```
+
+results in
+
+``` js
+import { module, test } from 'qunit';
+import { setupRenderingTest } from 'ember-qunit';
+import { render } from '@ember/test-helpers';
+import hbs from 'htmlbars-inline-precompile';
+
+module("my component", function(hooks) {
+  setupRenderingTest(hooks);
+
+  test('inline templates ftw', async function(assert) {
+    await render(Ember.HTMLBars.template(function() {
+      /* crazy HTMLBars template function stuff */
+    }));
+
+    assert.dom().hasText('hello!');
+  });
 });
 ```
