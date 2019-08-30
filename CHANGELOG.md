@@ -1,3 +1,34 @@
+## v2.0.0 (2019-08-30)
+
+#### :boom: Breaking Change
+* [#77](https://github.com/ember-cli/babel-plugin-htmlbars-inline-precompile/pull/77) Drop Node 6 and 11 support. ([@rwjblue](https://github.com/rwjblue))
+* [#50](https://github.com/ember-cli/babel-plugin-htmlbars-inline-precompile/pull/50) Drop support for Node 4 ([@Turbo87](https://github.com/Turbo87))
+
+#### :rocket: Enhancement
+* [#89](https://github.com/ember-cli/babel-plugin-htmlbars-inline-precompile/pull/89) Add an inline comment with the original template. ([@rwjblue](https://github.com/rwjblue))
+* [#75](https://github.com/ember-cli/babel-plugin-htmlbars-inline-precompile/pull/75) Add ability to pass static options to transpilation. ([@rwjblue](https://github.com/rwjblue))
+* [#42](https://github.com/ember-cli/babel-plugin-htmlbars-inline-precompile/pull/42) Test templates from MU co-located tests ([@NullVoxPopuli](https://github.com/NullVoxPopuli))
+
+#### :memo: Documentation
+* [#86](https://github.com/ember-cli/babel-plugin-htmlbars-inline-precompile/pull/86) Add requirements section to README. ([@rwjblue](https://github.com/rwjblue))
+* [#83](https://github.com/ember-cli/babel-plugin-htmlbars-inline-precompile/pull/83) Revamp README. ([@rwjblue](https://github.com/rwjblue))
+
+#### :house: Internal
+* [#87](https://github.com/ember-cli/babel-plugin-htmlbars-inline-precompile/pull/87) Update the test harness to use Babel 7. ([@rwjblue](https://github.com/rwjblue))
+* [#85](https://github.com/ember-cli/babel-plugin-htmlbars-inline-precompile/pull/85) Migrate to building AST nodes instead of replacing with source. ([@rwjblue](https://github.com/rwjblue))
+* [#84](https://github.com/ember-cli/babel-plugin-htmlbars-inline-precompile/pull/84) Add release-it setup. ([@rwjblue](https://github.com/rwjblue))
+* [#79](https://github.com/ember-cli/babel-plugin-htmlbars-inline-precompile/pull/79) Remove unused code for support MU. ([@rwjblue](https://github.com/rwjblue))
+* [#76](https://github.com/ember-cli/babel-plugin-htmlbars-inline-precompile/pull/76) Migrate to GH Actions. ([@rwjblue](https://github.com/rwjblue))
+* [#57](https://github.com/ember-cli/babel-plugin-htmlbars-inline-precompile/pull/57) TravisCI: Remove deprecated `sudo: false` option ([@Turbo87](https://github.com/Turbo87))
+* [#40](https://github.com/ember-cli/babel-plugin-htmlbars-inline-precompile/pull/40) nit: ensure concise functions are used consistently ([@stefanpenner](https://github.com/stefanpenner))
+
+#### Committers: 5
+- L. Preston Sego III ([@NullVoxPopuli](https://github.com/NullVoxPopuli))
+- Robert Jackson ([@rwjblue](https://github.com/rwjblue))
+- Stefan Penner ([@stefanpenner](https://github.com/stefanpenner))
+- Tobias Bieniek ([@Turbo87](https://github.com/Turbo87))
+- [@dependabot-preview[bot]](https://github.com/apps/dependabot-preview)
+
 
 ## [v0.2.5](https://github.com/ember-cli/babel-plugin-htmlbars-inline-precompile/tree/v0.2.5) (2018-06-02)
 [Full Changelog](https://github.com/ember-cli/babel-plugin-htmlbars-inline-precompile/compare/v0.2.4...v0.2.5)
