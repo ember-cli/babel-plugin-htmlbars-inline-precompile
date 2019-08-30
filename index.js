@@ -88,12 +88,16 @@ module.exports = function(babel) {
     let precompileResult = precompile(template, options);
     let precompiled = JSON.parse(precompileResult);
 
+    let templateExpression = buildExpression(precompiled);
+
+    t.addComment(templateExpression, 'leading', `\n  ${template}\n`, /* line comment? */ false);
+
     return t.callExpression(
       t.memberExpression(
         t.memberExpression(t.identifier('Ember'), t.identifier('HTMLBars')),
         t.identifier('template')
       ),
-      [buildExpression(precompiled)] // arguments
+      [templateExpression]
     );
   }
 
