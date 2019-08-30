@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push: {}
+  schedule:
+  - cron:  '0 6 * * 0' # weekly, on sundays
+
+jobs:
+  test:
+    name: ${{ matrix.node }}: tests
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node: ['6', '8', '10', '12']
+
+    steps:
+    - uses: actions/checkout@v1
+    - uses: actions/setup-node@v1
+      with:
+        node-version: ${{ matrix.node }}
+    - name: install yarn
+      run: npm install -g yarn
+    - name: install dependencies
+      run: yarn install --ignore-engines
+    - name: test
+      run: yarn test
+
+  floating-test:
+    name: floating-dependencies
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v1
+    - uses: actions/setup-node@v1
+      with:
+        node-version: '12.x'
+    - name: install yarn
+      run: npm install -g yarn
+    - name: install dependencies
+      run: yarn install --no-lockfile --ignore-engines
+    - name: test
+      run: yarn test
