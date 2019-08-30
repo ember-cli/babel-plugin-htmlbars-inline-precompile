@@ -15,9 +15,9 @@
     ]
   },
   "devDependencies": {
-    "babel-core": "^6.26.3",
-    "babel-plugin-transform-es2015-modules-amd": "^6.24.1",
-    "babel-plugin-transform-es2015-template-literals": "^6.22.0",
+    "@babel/core": "^7.5.5",
+    "@babel/plugin-transform-modules-amd": "^7.5.0",
+    "@babel/plugin-transform-template-literals": "^7.4.4",
     "eslint-plugin-node": "^9.2.0",
     "jest": "^24.9.0",
     "jest-runner-eslint": "^0.7.4",
