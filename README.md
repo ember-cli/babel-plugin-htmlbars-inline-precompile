@@ -4,6 +4,12 @@
 
 Babel plugin to replace tagged `.hbs` formatted strings with a precompiled version.
 
+## Requirements
+
+* Node 8+
+* Ember 2.10+
+* Babel 7
+
 ## Usage
 
 Can be used as either a normal function invocation or a tagged template string:
