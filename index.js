@@ -5,13 +5,13 @@ module.exports = function(babel) {
 
   function buildExpression(value) {
     switch (typeof value) {
-      case "string":
+      case 'string':
         return t.stringLiteral(value);
-      case "number":
+      case 'number':
         return t.numberLiteral(value);
-      case "boolean":
+      case 'boolean':
         return t.booleanLiteral(value);
-      case "object": {
+      case 'object': {
         if (Array.isArray(value)) {
           return buildArrayExpression(value);
         } else {
@@ -19,7 +19,11 @@ module.exports = function(babel) {
         }
       }
       default:
-        throw new Error(`hbs compilation error; unexpected type from precompiler: ${typeof value} for ${JSON.stringify(value)}`);
+        throw new Error(
+          `hbs compilation error; unexpected type from precompiler: ${typeof value} for ${JSON.stringify(
+            value
+          )}`
+        );
     }
   }
 
@@ -40,17 +44,19 @@ module.exports = function(babel) {
 
   function parseExpression(buildError, node) {
     switch (node.type) {
-      case "ObjectExpression":
+      case 'ObjectExpression':
         return parseObjectExpression(buildError, node);
-      case "ArrayExpression": {
+      case 'ArrayExpression': {
         return parseArrayExpression(buildError, node);
       }
-      case "StringLiteral":
-      case "BooleanLiteral":
-      case "NumericLiteral":
+      case 'StringLiteral':
+      case 'BooleanLiteral':
+      case 'NumericLiteral':
         return node.value;
       default:
-        throw buildError(`hbs can only accept static options but you passed ${JSON.stringify(node)}`);
+        throw buildError(
+          `hbs can only accept static options but you passed ${JSON.stringify(node)}`
+        );
     }
   }
 
@@ -64,8 +70,8 @@ module.exports = function(babel) {
     let result = {};
 
     node.properties.forEach(property => {
-      if (property.computed || property.key.type !== "Identifier") {
-        throw buildError("hbs can only accept static options");
+      if (property.computed || property.key.type !== 'Identifier') {
+        throw buildError('hbs can only accept static options');
       }
 
       let value = parseExpression(buildError, property.value);
@@ -83,7 +89,10 @@ module.exports = function(babel) {
     let precompiled = JSON.parse(precompileResult);
 
     return t.callExpression(
-      t.memberExpression(t.memberExpression(t.identifier("Ember"), t.identifier("HTMLBars")), t.identifier("template")),
+      t.memberExpression(
+        t.memberExpression(t.identifier('Ember'), t.identifier('HTMLBars')),
+        t.identifier('template')
+      ),
       [buildExpression(precompiled)] // arguments
     );
   }
@@ -93,7 +102,7 @@ module.exports = function(babel) {
       ImportDeclaration(path, state) {
         let node = path.node;
 
-        let modulePaths = state.opts.modulePaths || ["htmlbars-inline-precompile"];
+        let modulePaths = state.opts.modulePaths || ['htmlbars-inline-precompile'];
         let matchingModulePath = modulePaths.find(value => t.isLiteral(node.source, { value }));
 
         if (matchingModulePath) {
@@ -105,14 +114,17 @@ module.exports = function(babel) {
             throw path.buildCodeFrameError(msg);
           }
 
-          state.importId = state.importId || path.scope.generateUidIdentifierBasedOnNode(path.node.id);
+          state.importId =
+            state.importId || path.scope.generateUidIdentifierBasedOnNode(path.node.id);
           path.scope.rename(first.local.name, state.importId.name);
           path.remove();
         }
       },
 
       TaggedTemplateExpression(path, state) {
-        if (!state.importId) { return; }
+        if (!state.importId) {
+          return;
+        }
 
         let tagPath = path.get('tag');
         if (tagPath.node.name !== state.importId.name) {
@@ -120,7 +132,9 @@ module.exports = function(babel) {
         }
 
         if (path.node.quasi.expressions.length) {
-          throw path.buildCodeFrameError("placeholders inside a tagged template string are not supported");
+          throw path.buildCodeFrameError(
+            'placeholders inside a tagged template string are not supported'
+          );
         }
 
         let template = path.node.quasi.quasis.map(quasi => quasi.value.cooked).join('');
@@ -129,7 +143,9 @@ module.exports = function(babel) {
       },
 
       CallExpression(path, state) {
-        if (!state.importId) { return; }
+        if (!state.importId) {
+          return;
+        }
 
         let calleePath = path.get('callee');
         if (calleePath.node.name !== state.importId.name) {
@@ -139,19 +155,25 @@ module.exports = function(babel) {
         let options;
 
         let template = path.node.arguments[0];
-        if (template === undefined || typeof template.value !== "string") {
-          throw path.buildCodeFrameError("hbs should be invoked with at least a single argument: the template string");
+        if (template === undefined || typeof template.value !== 'string') {
+          throw path.buildCodeFrameError(
+            'hbs should be invoked with at least a single argument: the template string'
+          );
         }
 
         switch (path.node.arguments.length) {
           case 0:
-            throw path.buildCodeFrameError("hbs should be invoked with at least a single argument: the template string");
+            throw path.buildCodeFrameError(
+              'hbs should be invoked with at least a single argument: the template string'
+            );
           case 1:
             break;
           case 2: {
             let astOptions = path.node.arguments[1];
-            if (astOptions.type !== "ObjectExpression") {
-              throw path.buildCodeFrameError("hbs can only be invoked with 2 arguments: the template string, and any static options");
+            if (astOptions.type !== 'ObjectExpression') {
+              throw path.buildCodeFrameError(
+                'hbs can only be invoked with 2 arguments: the template string, and any static options'
+              );
             }
 
             options = parseObjectExpression(path.buildCodeFrameError.bind(path), astOptions);
@@ -159,19 +181,21 @@ module.exports = function(babel) {
             break;
           }
           default:
-            throw path.buildCodeFrameError("hbs can only be invoked with 2 arguments: the template string, and any static options");
+            throw path.buildCodeFrameError(
+              'hbs can only be invoked with 2 arguments: the template string, and any static options'
+            );
         }
 
         let { precompile } = state.opts;
 
         path.replaceWith(compileTemplate(precompile, template.value, options));
       },
-    }
+    },
   };
 };
 
 module.exports._parallelBabel = {
-  requireFile: __filename
+  requireFile: __filename,
 };
 
 module.exports.baseDir = function() {
