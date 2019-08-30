@@ -3,12 +3,61 @@
 module.exports = function(babel) {
   let t = babel.types;
 
-  function compileTemplate(precompile, template, _options) {
-    let options = Object.assign({ contents: template }, _options);
+  function buildExpression(value) {
+    switch (typeof value) {
+      case "string":
+        return t.stringLiteral(value);
+      case "number":
+        return t.numberLiteral(value);
+      case "boolean":
+        return t.booleanLiteral(value);
+      case "object": {
+        if (Array.isArray(value)) {
+          return buildArrayExpression(value);
+        } else {
+          return buildObjectExpression(value);
+        }
+      }
+      default:
+        throw new Error(`hbs compilation error; unexpected type from precompiler: ${typeof value} for ${JSON.stringify(value)}`);
+    }
+  }
 
-    let compiledTemplateString = `Ember.HTMLBars.template(${precompile(template, options)})`;
+  function buildObjectExpression(object) {
+    let properties = [];
+    for (let key in object) {
+      let value = object[key];
 
-    return compiledTemplateString;
+      properties.push(t.objectProperty(t.identifier(key), buildExpression(value)));
+    }
+
+    return t.objectExpression(properties);
+  }
+
+  function buildArrayExpression(array) {
+    return t.arrayExpression(array.map(i => buildExpression(i)));
+  }
+
+  function parseExpression(buildError, node) {
+    switch (node.type) {
+      case "ObjectExpression":
+        return parseObjectExpression(buildError, node);
+      case "ArrayExpression": {
+        return parseArrayExpression(buildError, node);
+      }
+      case "StringLiteral":
+      case "BooleanLiteral":
+      case "NumericLiteral":
+        return node.value;
+      default:
+        throw buildError(`hbs can only accept static options but you passed ${JSON.stringify(node)}`);
+    }
+  }
+
+  function parseArrayExpression(buildError, node) {
+    let result = node.elements.map(element => parseExpression(buildError, element));
+
+    return result;
   }
 
   function parseObjectExpression(buildError, node) {
@@ -19,19 +68,24 @@ module.exports = function(babel) {
         throw buildError("hbs can only accept static options");
       }
 
-      let value;
-      if (property.value.type === "ObjectExpression") {
-        value = parseObjectExpression(buildError, property.value);
-      } else if (["StringLiteral", "NumericLiteral", "BooleanLiteral"].indexOf(property.value.type) > -1) {
-        value = property.value.value;
-      } else {
-        throw buildError("hbs can only accept static options");
-      }
+      let value = parseExpression(buildError, property.value);
 
       result[property.key.name] = value;
     });
 
     return result;
+  }
+
+  function compileTemplate(precompile, template, _options) {
+    let options = Object.assign({ contents: template }, _options);
+
+    let precompileResult = precompile(template, options);
+    let precompiled = JSON.parse(precompileResult);
+
+    return t.callExpression(
+      t.memberExpression(t.memberExpression(t.identifier("Ember"), t.identifier("HTMLBars")), t.identifier("template")),
+      [buildExpression(precompiled)] // arguments
+    );
   }
 
   return {
@@ -71,7 +125,7 @@ module.exports = function(babel) {
 
         let template = path.node.quasi.quasis.map(quasi => quasi.value.cooked).join('');
 
-        path.replaceWithSourceString(compileTemplate(state.opts.precompile, template));
+        path.replaceWith(compileTemplate(state.opts.precompile, template));
       },
 
       CallExpression(path, state) {
@@ -110,7 +164,7 @@ module.exports = function(babel) {
 
         let { precompile } = state.opts;
 
-        path.replaceWithSourceString(compileTemplate(precompile, template.value, options));
+        path.replaceWith(compileTemplate(precompile, template.value, options));
       },
     }
   };
