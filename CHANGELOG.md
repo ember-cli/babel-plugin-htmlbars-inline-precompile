@@ -1,4 +1,3 @@
-# Change Log
 
 ## [v0.2.5](https://github.com/ember-cli/babel-plugin-htmlbars-inline-precompile/tree/v0.2.5) (2018-06-02)
 [Full Changelog](https://github.com/ember-cli/babel-plugin-htmlbars-inline-precompile/compare/v0.2.4...v0.2.5)
