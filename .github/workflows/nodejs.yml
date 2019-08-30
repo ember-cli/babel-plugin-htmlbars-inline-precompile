@@ -8,7 +8,7 @@ on:
 
 jobs:
   test:
-    name: ${{ matrix.node }}: tests
+    name: Tests
     runs-on: ubuntu-latest
 
     strategy:
@@ -28,7 +28,7 @@ jobs:
       run: yarn test
 
   floating-test:
-    name: floating-dependencies
+    name: Floating dependencies
     runs-on: ubuntu-latest
 
     steps:
