@@ -6,9 +6,10 @@ const babel = require('@babel/core');
 const HTMLBarsInlinePrecompile = require('../index');
 const TransformTemplateLiterals = require('@babel/plugin-transform-template-literals');
 const TransformModules = require('@babel/plugin-transform-modules-amd');
+const { stripIndent } = require('common-tags');
 
 describe('htmlbars-inline-precompile', function() {
-  let plugins, optionsReceived;
+  let precompile, plugins, optionsReceived;
 
   function transform(code) {
     return babel
@@ -21,13 +22,17 @@ describe('htmlbars-inline-precompile', function() {
 
   beforeEach(function() {
     optionsReceived = undefined;
+    precompile = (template, options) => {
+      optionsReceived = options;
+      return `"precompiled(${template})"`;
+    };
+
     plugins = [
       [
         HTMLBarsInlinePrecompile,
         {
-          precompile(template, options) {
-            optionsReceived = options;
-            return `"precompiled(${template})"`;
+          precompile() {
+            return precompile.apply(this, arguments);
           },
         },
       ],
@@ -56,6 +61,25 @@ describe('htmlbars-inline-precompile', function() {
       xyz: 123,
       qux: true,
     });
+  });
+
+  it('adds a comment with the original template string', function() {
+    let transformed = transform(stripIndent`
+      import hbs from 'htmlbars-inline-precompile';
+      if ('foo') {
+        const template = hbs\`hello\`;
+      }
+    `);
+
+    expect(transformed).toEqual(stripIndent`
+      if ('foo') {
+        const template = Ember.HTMLBars.template(
+        /*
+          hello
+        */
+        "precompiled(hello)");
+      }
+    `);
   });
 
   it('passes options when used as a tagged template string', function() {
@@ -93,7 +117,7 @@ describe('htmlbars-inline-precompile', function() {
     );
 
     expect(transformed).toEqual(
-      'var compiled = Ember.HTMLBars.template("precompiled(hello)");',
+      'var compiled = Ember.HTMLBars.template(\n/*\n  hello\n*/\n"precompiled(hello)");',
       'tagged template is replaced'
     );
   });
@@ -105,7 +129,9 @@ describe('htmlbars-inline-precompile', function() {
       "import hbs from 'ember-cli-htmlbars-inline-precompile';\nvar compiled = hbs`hello`;"
     );
 
-    expect(transformed).toEqual('var compiled = Ember.HTMLBars.template("precompiled(hello)");');
+    expect(transformed).toEqual(
+      'var compiled = Ember.HTMLBars.template(\n/*\n  hello\n*/\n"precompiled(hello)");'
+    );
   });
 
   it('does not cause an error when no import is found', function() {
@@ -121,7 +147,7 @@ describe('htmlbars-inline-precompile', function() {
       let b = otherHbs\`hello\`;
     `);
 
-    let expected = `let a = Ember.HTMLBars.template("precompiled(hello)");\nlet b = Ember.HTMLBars.template("precompiled(hello)");`;
+    let expected = `let a = Ember.HTMLBars.template(\n/*\n  hello\n*/\n"precompiled(hello)");\nlet b = Ember.HTMLBars.template(\n/*\n  hello\n*/\n"precompiled(hello)");`;
 
     expect(transformed).toEqual(expected, 'tagged template is replaced');
   });
@@ -133,7 +159,7 @@ describe('htmlbars-inline-precompile', function() {
     );
 
     expect(transformed).toEqual(
-      `define([], function () {\n  "use strict";\n\n  var compiled = Ember.HTMLBars.template("precompiled(hello)");\n});`,
+      `define([], function () {\n  "use strict";\n\n  var compiled = Ember.HTMLBars.template(\n  /*\n    hello\n  */\n  "precompiled(hello)");\n});`,
       'tagged template is replaced'
     );
   });
@@ -145,7 +171,7 @@ describe('htmlbars-inline-precompile', function() {
     );
 
     expect(transformed).toEqual(
-      `define([], function () {\n  "use strict";\n\n  var compiled = Ember.HTMLBars.template("precompiled(hello)");\n});`,
+      `define([], function () {\n  "use strict";\n\n  var compiled = Ember.HTMLBars.template(\n  /*\n    hello\n  */\n  "precompiled(hello)");\n});`,
       'tagged template is replaced'
     );
   });
@@ -157,7 +183,7 @@ describe('htmlbars-inline-precompile', function() {
     );
 
     expect(transformed).toEqual(
-      'var compiled = Ember.HTMLBars.template("precompiled(hello)");',
+      'var compiled = Ember.HTMLBars.template(\n/*\n  hello\n*/\n"precompiled(hello)");',
       'tagged template is replaced'
     );
   });
@@ -194,7 +220,7 @@ describe('htmlbars-inline-precompile', function() {
       );
 
       expect(transformed).toEqual(
-        'var compiled = Ember.HTMLBars.template("precompiled(hello)");',
+        'var compiled = Ember.HTMLBars.template(\n/*\n  hello\n*/\n"precompiled(hello)");',
         'tagged template is replaced'
       );
     });
@@ -219,6 +245,26 @@ describe('htmlbars-inline-precompile', function() {
       expect(() =>
         transform("import hbs from 'htmlbars-inline-precompile';\nvar compiled = hbs();")
       ).toThrow(/hbs should be invoked with at least a single argument: the template string/);
+    });
+  });
+
+  describe('with ember-source', function() {
+    const compiler = require('ember-source/dist/ember-template-compiler');
+
+    beforeEach(function() {
+      precompile = (template, options) => {
+        return compiler.precompile(template, options);
+      };
+    });
+
+    it('includes the original template content', function() {
+      let transformed = transform(stripIndent`
+        import hbs from 'htmlbars-inline-precompile';
+
+        const template = hbs\`hello {{firstName}}\`;
+      `);
+
+      expect(transformed).toContain(`hello {{firstName}}`);
     });
   });
 });
