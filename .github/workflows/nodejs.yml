@@ -13,6 +13,22 @@ on:
   - cron:  '0 6 * * 0' # weekly, on sundays
 
 jobs:
+  lint:
+    name: Linting
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v1
+    - uses: actions/setup-node@v1
+      with:
+        node-version: 12.x
+    - name: install yarn
+      run: npm install -g yarn
+    - name: install dependencies
+      run: yarn install
+    - name: linting
+      run: yarn lint
+
   test:
     name: Tests
     runs-on: ubuntu-latest
