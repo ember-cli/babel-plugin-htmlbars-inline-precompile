@@ -106,21 +106,46 @@ module.exports = function(babel) {
       ImportDeclaration(path, state) {
         let node = path.node;
 
-        let modulePaths = state.opts.modulePaths || ['htmlbars-inline-precompile'];
+        let modules = state.opts.modules || {
+          'htmlbars-inline-precompile': 'default',
+        };
+
+        if (state.opts.modulePaths) {
+          let modulePaths = state.opts.modulePaths;
+
+          modulePaths.forEach(path => (modules[path] = 'default'));
+        }
+
+        let modulePaths = Object.keys(modules);
         let matchingModulePath = modulePaths.find(value => t.isLiteral(node.source, { value }));
+        let modulePathExport = modules[matchingModulePath];
 
         if (matchingModulePath) {
           let first = node.specifiers && node.specifiers[0];
-          if (!t.isImportDefaultSpecifier(first)) {
-            let input = state.file.code;
-            let usedImportStatement = input.slice(node.start, node.end);
-            let msg = `Only \`import hbs from '${matchingModulePath}'\` is supported. You used: \`${usedImportStatement}\``;
-            throw path.buildCodeFrameError(msg);
+          let localName = first.local.name;
+
+          if (modulePathExport === 'default') {
+            if (!t.isImportDefaultSpecifier(first)) {
+              let input = state.file.code;
+              let usedImportStatement = input.slice(node.start, node.end);
+              let msg = `Only \`import hbs from '${matchingModulePath}'\` is supported. You used: \`${usedImportStatement}\``;
+              throw path.buildCodeFrameError(msg);
+            }
+          } else {
+            if (!t.isImportSpecifier(first) || modulePathExport !== first.imported.name) {
+              let input = state.file.code;
+              let usedImportStatement = input.slice(node.start, node.end);
+              let msg = `Only \`import { ${modulePathExport} } from '${matchingModulePath}'\` is supported. You used: \`${usedImportStatement}\``;
+
+              throw path.buildCodeFrameError(msg);
+            }
           }
 
           state.importId =
             state.importId || path.scope.generateUidIdentifierBasedOnNode(path.node.id);
-          path.scope.rename(first.local.name, state.importId.name);
+
+          path.scope.rename(localName, state.importId.name);
+
           path.remove();
         }
       },

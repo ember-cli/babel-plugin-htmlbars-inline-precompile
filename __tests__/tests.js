@@ -111,6 +111,22 @@ describe('htmlbars-inline-precompile', function() {
     );
   });
 
+  it('throws error when import statement is not using custom specifier', function() {
+    plugins[0][1].modules = {
+      'foo-bar': 'baz',
+    };
+
+    expect(() => transform("import hbs from 'foo-bar'")).toThrow(
+      /Only `import { baz } from 'foo-bar'` is supported/,
+      'needed import syntax is present'
+    );
+
+    expect(() => transform("import hbs from 'foo-bar'")).toThrow(
+      /You used: `import hbs from 'foo-bar'`/,
+      'used import syntax is present'
+    );
+  });
+
   it('replaces tagged template expressions with precompiled version', function() {
     let transformed = transform(
       "import hbs from 'htmlbars-inline-precompile';\nvar compiled = hbs`hello`;"
@@ -119,6 +135,18 @@ describe('htmlbars-inline-precompile', function() {
     expect(transformed).toEqual(
       'var compiled = Ember.HTMLBars.template(\n/*\n  hello\n*/\n"precompiled(hello)");',
       'tagged template is replaced'
+    );
+  });
+
+  it('replaces tagged template expressions with precompiled version for custom import paths with named exports', function() {
+    plugins[0][1].modules = {
+      'foo-bar': 'baz',
+    };
+
+    let transformed = transform("import { baz } from 'foo-bar';\nvar compiled = baz`hello`;");
+
+    expect(transformed).toEqual(
+      'var compiled = Ember.HTMLBars.template(\n/*\n  hello\n*/\n"precompiled(hello)");'
     );
   });
 
