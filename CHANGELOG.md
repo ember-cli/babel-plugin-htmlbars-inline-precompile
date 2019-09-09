@@ -1,3 +1,12 @@
+## v2.1.0 (2019-09-09)
+
+#### :rocket: Enhancement
+* [#92](https://github.com/ember-cli/babel-plugin-htmlbars-inline-precompile/pull/92) Allow named exports to be replaced. ([@rwjblue](https://github.com/rwjblue))
+
+#### Committers: 2
+- Robert Jackson ([@rwjblue](https://github.com/rwjblue))
+- [@dependabot-preview[bot]](https://github.com/apps/dependabot-preview)
+
 ## v2.0.0 (2019-08-30)
 
 #### :boom: Breaking Change
