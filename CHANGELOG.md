@@ -1,3 +1,11 @@
+## v2.1.1 (2019-09-29)
+
+#### :bug: Bug Fix
+* [#104](https://github.com/ember-cli/babel-plugin-htmlbars-inline-precompile/pull/104) Ensure JSON.stringify'ed value is valid for hbs() options. ([@rwjblue](https://github.com/rwjblue))
+
+#### Committers: 1
+- Robert Jackson ([@rwjblue](https://github.com/rwjblue))
+
 ## v2.1.0 (2019-09-09)
 
 #### :rocket: Enhancement
