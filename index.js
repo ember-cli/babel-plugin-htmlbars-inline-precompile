@@ -70,13 +70,16 @@ module.exports = function(babel) {
     let result = {};
 
     node.properties.forEach(property => {
-      if (property.computed || property.key.type !== 'Identifier') {
+      if (property.computed || !['Identifier', 'StringLiteral'].includes(property.key.type)) {
         throw buildError('hbs can only accept static options');
       }
 
+      let propertyName =
+        property.key.type === 'Identifier' ? property.key.name : property.key.value;
+
       let value = parseExpression(buildError, property.value);
 
-      result[property.key.name] = value;
+      result[propertyName] = value;
     });
 
     return result;

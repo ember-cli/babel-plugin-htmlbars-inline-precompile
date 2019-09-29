@@ -51,7 +51,9 @@ describe('htmlbars-inline-precompile', function() {
   it('allows static userland options when used as a call expression', function() {
     let source = 'hello';
     transform(
-      `import hbs from 'htmlbars-inline-precompile';\nvar compiled = hbs('${source}', { parseOptions: { srcName: 'bar.hbs' }, moduleName: 'foo/bar.hbs', xyz: 123, qux: true });`
+      `import hbs from 'htmlbars-inline-precompile';\nvar compiled = hbs('${source}', { parseOptions: { srcName: 'bar.hbs' }, moduleName: 'foo/bar.hbs', xyz: 123, qux: true, stringifiedThing: ${JSON.stringify(
+        { foo: 'baz' }
+      )}});`
     );
 
     expect(optionsReceived).toEqual({
@@ -60,6 +62,9 @@ describe('htmlbars-inline-precompile', function() {
       moduleName: 'foo/bar.hbs',
       xyz: 123,
       qux: true,
+      stringifiedThing: {
+        foo: 'baz',
+      },
     });
   });
 
