@@ -1,3 +1,7 @@
+## v3.0.0 (2019-10-01)
+
+* Released in order to avoid incompatibilities between ember-cli-htmlbars and ember-cli-htmlbars-inline-precompile. Contains no changes from prior version.
+
 ## v2.1.1 (2019-09-29)
 
 #### :bug: Bug Fix
