@@ -19,7 +19,7 @@
     "@babel/plugin-transform-modules-amd": "^7.5.0",
     "@babel/plugin-transform-template-literals": "^7.4.4",
     "common-tags": "^1.8.0",
-    "ember-source": "^3.14.0",
+    "ember-source": "^3.14.1",
     "eslint": "^6.6.0",
     "eslint-config-prettier": "^6.5.0",
     "eslint-plugin-node": "^10.0.0",
