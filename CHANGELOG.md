@@ -1,3 +1,11 @@
+## v3.0.1 (2019-12-11)
+
+#### :bug: Bug Fix
+* [#134](https://github.com/ember-cli/babel-plugin-htmlbars-inline-precompile/pull/134) Ensure `*/` included in a template does break surrounding JS. ([@rwjblue](https://github.com/rwjblue))
+
+#### Committers: 1
+- Robert Jackson ([@rwjblue](https://github.com/rwjblue))
+
 ## v3.0.0 (2019-10-01)
 
 * Released in order to avoid incompatibilities between ember-cli-htmlbars and ember-cli-htmlbars-inline-precompile. Contains no changes from prior version.
