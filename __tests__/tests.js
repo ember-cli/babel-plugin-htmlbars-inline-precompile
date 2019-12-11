@@ -87,6 +87,25 @@ describe('htmlbars-inline-precompile', function() {
     `);
   });
 
+  it('escapes any */ included in the template string', function() {
+    let transformed = transform(stripIndent`
+      import hbs from 'htmlbars-inline-precompile';
+      if ('foo') {
+        const template = hbs\`hello */\`;
+      }
+    `);
+
+    expect(transformed).toEqual(stripIndent`
+      if ('foo') {
+        const template = Ember.HTMLBars.template(
+        /*
+          hello *\\/
+        */
+        "precompiled(hello */)");
+      }
+    `);
+  });
+
   it('passes options when used as a tagged template string', function() {
     let source = 'hello';
     transform(`import hbs from 'htmlbars-inline-precompile';\nvar compiled = hbs\`${source}\`;`);
