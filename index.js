@@ -93,7 +93,12 @@ module.exports = function(babel) {
 
     let templateExpression = buildExpression(precompiled);
 
-    t.addComment(templateExpression, 'leading', `\n  ${template}\n`, /* line comment? */ false);
+    t.addComment(
+      templateExpression,
+      'leading',
+      `\n  ${template.replace(/\*\//g, '*\\/')}\n`,
+      /* line comment? */ false
+    );
 
     return t.callExpression(
       t.memberExpression(
