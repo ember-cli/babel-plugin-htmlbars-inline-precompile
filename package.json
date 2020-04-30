@@ -16,7 +16,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.9.0",
-    "@babel/plugin-transform-modules-amd": "^7.9.0",
+    "@babel/plugin-transform-modules-amd": "^7.9.6",
     "@babel/plugin-transform-template-literals": "^7.8.3",
     "common-tags": "^1.8.0",
     "ember-source": "^3.17.3",
