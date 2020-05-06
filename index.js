@@ -204,31 +204,44 @@ module.exports = function (babel) {
           return;
         }
 
-        let options;
+        let args = path.node.arguments;
 
-        let template = path.node.arguments[0];
-        if (template === undefined || typeof template.value !== 'string') {
-          throw path.buildCodeFrameError(
-            'hbs should be invoked with at least a single argument: the template string'
-          );
-        }
+        let template;
 
-        switch (path.node.arguments.length) {
-          case 0:
+        switch (args[0] && args[0].type) {
+          case 'StringLiteral':
+            template = args[0].value;
+            break;
+          case 'TemplateLiteral':
+            if (args[0].expressions.length) {
+              throw path.buildCodeFrameError(
+                'placeholders inside a template string are not supported'
+              );
+            } else {
+              template = args[0].quasis.map((quasi) => quasi.value.cooked).join('');
+            }
+            break;
+          case 'TaggedTemplateExpression':
+            throw path.buildCodeFrameError('tagged template strings inside hbs are not supported');
+          default:
             throw path.buildCodeFrameError(
               'hbs should be invoked with at least a single argument: the template string'
             );
+        }
+
+        let options;
+
+        switch (args.length) {
           case 1:
             break;
           case 2: {
-            let astOptions = path.node.arguments[1];
-            if (astOptions.type !== 'ObjectExpression') {
+            if (args[1].type !== 'ObjectExpression') {
               throw path.buildCodeFrameError(
                 'hbs can only be invoked with 2 arguments: the template string, and any static options'
               );
             }
 
-            options = parseObjectExpression(path.buildCodeFrameError.bind(path), astOptions);
+            options = parseObjectExpression(path.buildCodeFrameError.bind(path), args[1]);
 
             break;
           }
@@ -240,7 +253,7 @@ module.exports = function (babel) {
 
         let { precompile } = state.opts;
 
-        path.replaceWith(compileTemplate(precompile, template.value, options));
+        path.replaceWith(compileTemplate(precompile, template, options));
       },
     },
   };

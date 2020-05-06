@@ -48,6 +48,29 @@ describe('htmlbars-inline-precompile', function () {
     });
   });
 
+  it('allows a template string literal when used as a call expression', function () {
+    let source = 'hello';
+    transform(`import hbs from 'htmlbars-inline-precompile';\nvar compiled = hbs(\`${source}\`);`);
+
+    expect(optionsReceived).toEqual({
+      contents: source,
+    });
+  });
+
+  it('errors when the template string contains placeholders', function () {
+    expect(() =>
+      transform(
+        "import hbs from 'htmlbars-inline-precompile';\nvar compiled = hbs(`string ${value}`)"
+      )
+    ).toThrow(/placeholders inside a template string are not supported/);
+  });
+
+  it('errors when the template string is tagged', function () {
+    expect(() =>
+      transform("import hbs from 'htmlbars-inline-precompile';\nvar compiled = hbs(hbs`string`)")
+    ).toThrow(/tagged template strings inside hbs are not supported/);
+  });
+
   it('allows static userland options when used as a call expression', function () {
     let source = 'hello';
     transform(
