@@ -1,3 +1,15 @@
+## v3.1.0 (2020-05-06)
+
+#### :rocket: Enhancement
+* [#208](https://github.com/ember-cli/babel-plugin-htmlbars-inline-precompile/pull/208) Add ability to transfer compilation errors into runtime. ([@rwjblue](https://github.com/rwjblue))
+
+#### :house: Internal
+* [#209](https://github.com/ember-cli/babel-plugin-htmlbars-inline-precompile/pull/209) Add Node 14 to CI. ([@rwjblue](https://github.com/rwjblue))
+
+#### Committers: 2
+- Robert Jackson ([@rwjblue](https://github.com/rwjblue))
+- [@dependabot-preview[bot]](https://github.com/apps/dependabot-preview)
+
 ## v3.0.1 (2019-12-11)
 
 #### :bug: Bug Fix
