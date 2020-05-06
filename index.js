@@ -3,6 +3,10 @@
 module.exports = function(babel) {
   let t = babel.types;
 
+  const runtimeErrorIIFE = babel.template(
+    `(function() {\n  throw new Error('ERROR_MESSAGE');\n})();`
+  );
+
   function buildExpression(value) {
     switch (typeof value) {
       case 'string':
@@ -88,7 +92,18 @@ module.exports = function(babel) {
   function compileTemplate(precompile, template, _options) {
     let options = Object.assign({ contents: template }, _options);
 
-    let precompileResult = precompile(template, options);
+    let precompileResult;
+
+    if (options.insertRuntimeErrors) {
+      try {
+        precompileResult = precompile(template, options);
+      } catch (error) {
+        return runtimeErrorIIFE({ ERROR_MESSAGE: error.message });
+      }
+    } else {
+      precompileResult = precompile(template, options);
+    }
+
     let precompiled = JSON.parse(precompileResult);
 
     let templateExpression = buildExpression(precompiled);
