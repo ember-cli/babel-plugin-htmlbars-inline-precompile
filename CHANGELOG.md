@@ -1,3 +1,12 @@
+## v4.0.1 (2020-05-06)
+
+#### :bug: Bug Fix
+* [#215](https://github.com/ember-cli/babel-plugin-htmlbars-inline-precompile/pull/215) Add support for hbs(`...`) ([@chancancode](https://github.com/chancancode))
+
+#### Committers: 1
+- Godfrey Chan ([@chancancode](https://github.com/chancancode))
+
+
 ## v4.0.0 (2020-05-06)
 
 #### :boom: Breaking Change
