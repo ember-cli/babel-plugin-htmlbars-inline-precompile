@@ -1,3 +1,16 @@
+## v4.0.0 (2020-05-06)
+
+#### :boom: Breaking Change
+* [#210](https://github.com/ember-cli/babel-plugin-htmlbars-inline-precompile/pull/210) Drop Node 8 support. ([@rwjblue](https://github.com/rwjblue))
+
+#### :house: Internal
+* [#211](https://github.com/ember-cli/babel-plugin-htmlbars-inline-precompile/pull/211) Update release automation dependencies and settings. ([@rwjblue](https://github.com/rwjblue))
+
+#### Committers: 2
+- Robert Jackson ([@rwjblue](https://github.com/rwjblue))
+- [@dependabot-preview[bot]](https://github.com/apps/dependabot-preview)
+
+
 ## v3.1.0 (2020-05-06)
 
 #### :rocket: Enhancement
