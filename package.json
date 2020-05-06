@@ -9,11 +9,6 @@
     "lint": "eslint --cache .",
     "test": "jest"
   },
-  "jest": {
-    "projects": [
-      "<rootDir>/jest-test.config.js"
-    ]
-  },
   "devDependencies": {
     "@babel/core": "^7.9.6",
     "@babel/plugin-transform-modules-amd": "^7.9.6",
