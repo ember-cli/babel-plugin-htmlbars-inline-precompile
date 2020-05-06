@@ -1,6 +1,6 @@
 'use strict';
 
-module.exports = function(babel) {
+module.exports = function (babel) {
   let t = babel.types;
 
   const runtimeErrorIIFE = babel.template(
@@ -43,7 +43,7 @@ module.exports = function(babel) {
   }
 
   function buildArrayExpression(array) {
-    return t.arrayExpression(array.map(i => buildExpression(i)));
+    return t.arrayExpression(array.map((i) => buildExpression(i)));
   }
 
   function parseExpression(buildError, node) {
@@ -65,7 +65,7 @@ module.exports = function(babel) {
   }
 
   function parseArrayExpression(buildError, node) {
-    let result = node.elements.map(element => parseExpression(buildError, element));
+    let result = node.elements.map((element) => parseExpression(buildError, element));
 
     return result;
   }
@@ -73,7 +73,7 @@ module.exports = function(babel) {
   function parseObjectExpression(buildError, node) {
     let result = {};
 
-    node.properties.forEach(property => {
+    node.properties.forEach((property) => {
       if (property.computed || !['Identifier', 'StringLiteral'].includes(property.key.type)) {
         throw buildError('hbs can only accept static options');
       }
@@ -136,11 +136,11 @@ module.exports = function(babel) {
         if (state.opts.modulePaths) {
           let modulePaths = state.opts.modulePaths;
 
-          modulePaths.forEach(path => (modules[path] = 'default'));
+          modulePaths.forEach((path) => (modules[path] = 'default'));
         }
 
         let modulePaths = Object.keys(modules);
-        let matchingModulePath = modulePaths.find(value => t.isLiteral(node.source, { value }));
+        let matchingModulePath = modulePaths.find((value) => t.isLiteral(node.source, { value }));
         let modulePathExport = modules[matchingModulePath];
 
         if (matchingModulePath) {
@@ -189,7 +189,7 @@ module.exports = function(babel) {
           );
         }
 
-        let template = path.node.quasi.quasis.map(quasi => quasi.value.cooked).join('');
+        let template = path.node.quasi.quasis.map((quasi) => quasi.value.cooked).join('');
 
         path.replaceWith(compileTemplate(state.opts.precompile, template));
       },
@@ -250,6 +250,6 @@ module.exports._parallelBabel = {
   requireFile: __filename,
 };
 
-module.exports.baseDir = function() {
+module.exports.baseDir = function () {
   return __dirname;
 };
