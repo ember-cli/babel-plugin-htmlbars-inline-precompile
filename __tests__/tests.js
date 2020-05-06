@@ -87,6 +87,22 @@ describe('htmlbars-inline-precompile', function() {
     `);
   });
 
+  it('avoids a build time error when passed `insertRuntimeErrors`', function() {
+    precompile = () => {
+      throw new Error('NOOOOOOOOOOOOOOOOOOOOOO');
+    };
+
+    let transformed = transform(
+      `import hbs from 'htmlbars-inline-precompile';\nvar compiled = hbs('hello', { insertRuntimeErrors: true });`
+    );
+
+    expect(transformed).toMatchInlineSnapshot(`
+      "var compiled = function () {
+        throw new Error(\\"NOOOOOOOOOOOOOOOOOOOOOO\\");
+      }();"
+    `);
+  });
+
   it('escapes any */ included in the template string', function() {
     let transformed = transform(stripIndent`
       import hbs from 'htmlbars-inline-precompile';
