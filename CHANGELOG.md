@@ -1,3 +1,12 @@
+## v4.1.0 (2020-05-07)
+
+#### :rocket: Enhancement / :bug: Fix
+* [#216](https://github.com/ember-cli/babel-plugin-htmlbars-inline-precompile/pull/216) Avoid assuming ember-template-compiler result is JSON ([@rwjblue](https://github.com/rwjblue))
+
+#### Committers: 1
+- Robert Jackson ([@rwjblue](https://github.com/rwjblue))
+
+
 ## v4.0.1 (2020-05-06)
 
 #### :bug: Bug Fix
