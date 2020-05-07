@@ -39,6 +39,24 @@ describe('htmlbars-inline-precompile', function () {
     ];
   });
 
+  it('supports compilation that returns a non-JSON.parseable object', function () {
+    precompile = (template) => {
+      return `function() { return "${template}"; }`;
+    };
+
+    let transpiled = transform(
+      "import hbs from 'htmlbars-inline-precompile';\nvar compiled = hbs`hello`;"
+    );
+
+    expect(transpiled).toMatchInlineSnapshot(`
+      "var compiled = Ember.HTMLBars.template(
+      /*
+        hello
+      */
+      function() { return \\"hello\\"; });"
+    `);
+  });
+
   it('passes options when used as a call expression', function () {
     let source = 'hello';
     transform(`import hbs from 'htmlbars-inline-precompile';\nvar compiled = hbs('${source}');`);
