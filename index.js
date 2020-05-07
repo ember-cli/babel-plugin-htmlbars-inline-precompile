@@ -6,45 +6,7 @@ module.exports = function (babel) {
   const runtimeErrorIIFE = babel.template(
     `(function() {\n  throw new Error('ERROR_MESSAGE');\n})();`
   );
-
-  function buildExpression(value) {
-    switch (typeof value) {
-      case 'string':
-        return t.stringLiteral(value);
-      case 'number':
-        return t.numberLiteral(value);
-      case 'boolean':
-        return t.booleanLiteral(value);
-      case 'object': {
-        if (Array.isArray(value)) {
-          return buildArrayExpression(value);
-        } else {
-          return buildObjectExpression(value);
-        }
-      }
-      default:
-        throw new Error(
-          `hbs compilation error; unexpected type from precompiler: ${typeof value} for ${JSON.stringify(
-            value
-          )}`
-        );
-    }
-  }
-
-  function buildObjectExpression(object) {
-    let properties = [];
-    for (let key in object) {
-      let value = object[key];
-
-      properties.push(t.objectProperty(t.identifier(key), buildExpression(value)));
-    }
-
-    return t.objectExpression(properties);
-  }
-
-  function buildArrayExpression(array) {
-    return t.arrayExpression(array.map((i) => buildExpression(i)));
-  }
+  const parsePrecompiledTemplate = babel.template('PRECOMPILED');
 
   function parseExpression(buildError, node) {
     switch (node.type) {
@@ -104,9 +66,9 @@ module.exports = function (babel) {
       precompileResult = precompile(template, options);
     }
 
-    let precompiled = JSON.parse(precompileResult);
-
-    let templateExpression = buildExpression(precompiled);
+    let templateExpression = parsePrecompiledTemplate({
+      PRECOMPILED: precompileResult,
+    }).expression;
 
     t.addComment(
       templateExpression,
