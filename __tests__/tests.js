@@ -66,6 +66,80 @@ describe('htmlbars-inline-precompile', function () {
     });
   });
 
+  it('passes through isProduction option when used as a call expression', function () {
+    let source = 'hello';
+
+    plugins = [
+      [
+        HTMLBarsInlinePrecompile,
+        {
+          precompile() {
+            return precompile.apply(this, arguments);
+          },
+
+          isProduction: true,
+        },
+      ],
+    ];
+
+    transform(`import hbs from 'htmlbars-inline-precompile';\nvar compiled = hbs('${source}');`);
+
+    expect(optionsReceived).toEqual({
+      contents: source,
+      isProduction: true,
+    });
+  });
+
+  it('uses the user provided isProduction option if present', function () {
+    let source = 'hello';
+
+    plugins = [
+      [
+        HTMLBarsInlinePrecompile,
+        {
+          precompile() {
+            return precompile.apply(this, arguments);
+          },
+
+          isProduction: false,
+        },
+      ],
+    ];
+
+    transform(
+      `import hbs from 'htmlbars-inline-precompile';\nvar compiled = hbs('${source}', { isProduction: true });`
+    );
+
+    expect(optionsReceived).toEqual({
+      contents: source,
+      isProduction: true,
+    });
+  });
+
+  it('passes through isProduction option when used as a TaggedTemplateExpression', function () {
+    let source = 'hello';
+
+    plugins = [
+      [
+        HTMLBarsInlinePrecompile,
+        {
+          precompile() {
+            return precompile.apply(this, arguments);
+          },
+
+          isProduction: true,
+        },
+      ],
+    ];
+
+    transform(`import hbs from 'htmlbars-inline-precompile';\nvar compiled = hbs\`${source}\`;`);
+
+    expect(optionsReceived).toEqual({
+      contents: source,
+      isProduction: true,
+    });
+  });
+
   it('allows a template string literal when used as a call expression', function () {
     let source = 'hello';
     transform(`import hbs from 'htmlbars-inline-precompile';\nvar compiled = hbs(\`${source}\`);`);

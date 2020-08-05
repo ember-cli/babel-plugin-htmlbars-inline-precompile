@@ -153,7 +153,9 @@ module.exports = function (babel) {
 
         let template = path.node.quasi.quasis.map((quasi) => quasi.value.cooked).join('');
 
-        path.replaceWith(compileTemplate(state.opts.precompile, template));
+        let { precompile, isProduction } = state.opts;
+
+        path.replaceWith(compileTemplate(precompile, template, { isProduction }));
       },
 
       CallExpression(path, state) {
@@ -195,6 +197,7 @@ module.exports = function (babel) {
 
         switch (args.length) {
           case 1:
+            options = {};
             break;
           case 2: {
             if (args[1].type !== 'ObjectExpression') {
@@ -213,7 +216,12 @@ module.exports = function (babel) {
             );
         }
 
-        let { precompile } = state.opts;
+        let { precompile, isProduction } = state.opts;
+
+        // allow the user specified value to "win" over ours
+        if (!('isProduction' in options)) {
+          options.isProduction = isProduction;
+        }
 
         path.replaceWith(compileTemplate(precompile, template, options));
       },
