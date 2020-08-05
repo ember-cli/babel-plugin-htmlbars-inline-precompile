@@ -191,7 +191,9 @@ module.exports = function(babel) {
 
         let template = path.node.quasi.quasis.map(quasi => quasi.value.cooked).join('');
 
-        path.replaceWith(compileTemplate(state.opts.precompile, template));
+        let { precompile, isProduction } = state.opts;
+
+        path.replaceWith(compileTemplate(precompile, template, { isProduction }));
       },
 
       CallExpression(path, state) {
@@ -219,6 +221,7 @@ module.exports = function(babel) {
               'hbs should be invoked with at least a single argument: the template string'
             );
           case 1:
+            options = {};
             break;
           case 2: {
             let astOptions = path.node.arguments[1];
@@ -238,7 +241,12 @@ module.exports = function(babel) {
             );
         }
 
-        let { precompile } = state.opts;
+        let { precompile, isProduction } = state.opts;
+
+        // allow the user specified value to "win" over ours
+        if (!('isProduction' in options)) {
+          options.isProduction = isProduction;
+        }
 
         path.replaceWith(compileTemplate(precompile, template.value, options));
       },
