@@ -1,3 +1,13 @@
+## v4.2.0 (2020-08-10)
+
+#### :rocket: Enhancement
+* [#251](https://github.com/ember-cli/babel-plugin-htmlbars-inline-precompile/pull/251) [FEAT] Adds isProduction flag ([@pzuraq](https://github.com/pzuraq))
+
+#### Committers: 2
+- Chris Garrett ([@pzuraq](https://github.com/pzuraq))
+- Robert Jackson ([@rwjblue](https://github.com/rwjblue))
+
+
 ## v4.1.0 (2020-05-07)
 
 #### :rocket: Enhancement / :bug: Fix
