@@ -1,3 +1,5 @@
+* Adds `isProduction` option and pass through to `ember-template-compiler` (4619772)
+
 ## v3.1.0 (2020-05-06)
 
 #### :rocket: Enhancement
