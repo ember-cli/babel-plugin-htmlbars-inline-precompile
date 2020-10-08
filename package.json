@@ -21,7 +21,7 @@
     "eslint-plugin-prettier": "^3.1.4",
     "jest": "^26.5.2",
     "prettier": "^2.1.2",
-    "release-it": "^13.7.0",
+    "release-it": "^14.0.4",
     "release-it-lerna-changelog": "^2.4.0"
   },
   "engines": {
