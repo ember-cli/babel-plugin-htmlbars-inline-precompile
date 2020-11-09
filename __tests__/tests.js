@@ -6,6 +6,7 @@ const babel = require('@babel/core');
 const HTMLBarsInlinePrecompile = require('../index');
 const TransformTemplateLiterals = require('@babel/plugin-transform-template-literals');
 const TransformModules = require('@babel/plugin-transform-modules-amd');
+const TransformUnicodeEscapes = require('@babel/plugin-transform-unicode-escapes');
 const { stripIndent } = require('common-tags');
 
 describe('htmlbars-inline-precompile', function () {
@@ -53,7 +54,9 @@ describe('htmlbars-inline-precompile', function () {
       /*
         hello
       */
-      function() { return \\"hello\\"; });"
+      function () {
+        return \\"hello\\";
+      });"
     `);
   });
 
@@ -357,6 +360,21 @@ describe('htmlbars-inline-precompile', function () {
       `define([], function () {\n  "use strict";\n\n  var compiled = Ember.HTMLBars.template(\n  /*\n    hello\n  */\n  "precompiled(hello)");\n});`,
       'tagged template is replaced'
     );
+  });
+
+  it('works properly when used along with @babel/plugin-transform-unicode-escapes', function () {
+    plugins.push([TransformUnicodeEscapes]);
+    let transformed = transform(
+      "import hbs from 'htmlbars-inline-precompile';\nvar compiled = hbs('some emoji goes 💥');"
+    );
+
+    expect(transformed).toMatchInlineSnapshot(`
+      "var compiled = Ember.HTMLBars.template(
+      /*
+        some emoji goes 💥
+      */
+      \\"precompiled(some emoji goes 💥)\\");"
+    `);
   });
 
   it('replaces tagged template expressions when before babel-plugin-transform-es2015-template-literals', function () {

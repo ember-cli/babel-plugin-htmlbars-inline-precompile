@@ -6,7 +6,6 @@ module.exports = function (babel) {
   const runtimeErrorIIFE = babel.template(
     `(function() {\n  throw new Error('ERROR_MESSAGE');\n})();`
   );
-  const parsePrecompiledTemplate = babel.template('PRECOMPILED');
 
   function parseExpression(buildError, node) {
     switch (node.type) {
@@ -54,21 +53,21 @@ module.exports = function (babel) {
   function compileTemplate(precompile, template, _options) {
     let options = Object.assign({ contents: template }, _options);
 
-    let precompileResult;
+    let precompileResultString;
 
     if (options.insertRuntimeErrors) {
       try {
-        precompileResult = precompile(template, options);
+        precompileResultString = precompile(template, options);
       } catch (error) {
         return runtimeErrorIIFE({ ERROR_MESSAGE: error.message });
       }
     } else {
-      precompileResult = precompile(template, options);
+      precompileResultString = precompile(template, options);
     }
 
-    let templateExpression = parsePrecompiledTemplate({
-      PRECOMPILED: precompileResult,
-    }).expression;
+    let precompileResultAST = babel.parse(`var precompileResult = ${precompileResultString};`);
+
+    let templateExpression = precompileResultAST.program.body[0].declarations[0].init;
 
     t.addComment(
       templateExpression,
