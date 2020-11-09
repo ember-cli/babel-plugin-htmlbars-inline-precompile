@@ -1,3 +1,12 @@
+## v4.2.1 (2020-11-09)
+
+#### :bug: Bug Fix
+* [#297](https://github.com/ember-cli/babel-plugin-htmlbars-inline-precompile/pull/297) Fix issues when using emoji in templates while transpiling for IE11 ([@rwjblue](https://github.com/rwjblue))
+
+#### Committers: 1
+- Robert Jackson ([@rwjblue](https://github.com/rwjblue))
+
+
 ## v4.2.0 (2020-08-10)
 
 #### :rocket: Enhancement

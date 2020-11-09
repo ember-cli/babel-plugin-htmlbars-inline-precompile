@@ -1,6 +1,6 @@
 {
   "name": "babel-plugin-htmlbars-inline-precompile",
-  "version": "4.2.0",
+  "version": "4.2.1",
   "description": "Babel plugin to replace tagged template strings with precompiled HTMLBars templates",
   "repository": "https://github.com/ember-cli/babel-plugin-htmlbars-inline-precompile",
   "license": "MIT",
