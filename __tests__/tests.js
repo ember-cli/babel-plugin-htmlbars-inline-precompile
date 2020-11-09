@@ -54,7 +54,9 @@ describe('htmlbars-inline-precompile', function () {
       /*
         hello
       */
-      function() { return \\"hello\\"; });"
+      function () {
+        return \\"hello\\";
+      });"
     `);
   });
 
@@ -366,10 +368,13 @@ describe('htmlbars-inline-precompile', function () {
       "import hbs from 'htmlbars-inline-precompile';\nvar compiled = hbs('some emoji goes 💥');"
     );
 
-    expect(transformed).toEqual(
-      `define([], function () {\n  "use strict";\n\n  var compiled = Ember.HTMLBars.template(\n  /*\n    some emoji goes 💥\n  */\n  "precompiled(some emoji goes 💥)");\n});`,
-      'tagged template is replaced'
-    );
+    expect(transformed).toMatchInlineSnapshot(`
+      "var compiled = Ember.HTMLBars.template(
+      /*
+        some emoji goes 💥
+      */
+      \\"precompiled(some emoji goes 💥)\\");"
+    `);
   });
 
   it('replaces tagged template expressions when before babel-plugin-transform-es2015-template-literals', function () {
