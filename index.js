@@ -91,8 +91,9 @@ module.exports = function (babel) {
         let node = path.node;
 
         let modules = state.opts.modules || {
-          'htmlbars-inline-precompile': 'default',
           'ember-cli-htmlbars': 'hbs',
+          'ember-cli-htmlbars-inline-precompile': 'default',
+          'htmlbars-inline-precompile': 'default',
         };
 
         if (state.opts.modulePaths) {
