@@ -117,14 +117,12 @@ module.exports = function (babel) {
               let msg = `Only \`import hbs from '${matchingModulePath}'\` is supported. You used: \`${usedImportStatement}\``;
               throw path.buildCodeFrameError(msg);
             }
-          } else if (modulePathExport !== 'hbs') {
-            if (!t.isImportSpecifier(first) || modulePathExport !== first.imported.name) {
-              let input = state.file.code;
-              let usedImportStatement = input.slice(node.start, node.end);
-              let msg = `Only \`import { ${modulePathExport} } from '${matchingModulePath}'\` is supported. You used: \`${usedImportStatement}\``;
+          } else if (!t.isImportSpecifier(first) || modulePathExport !== first.imported.name) {
+            let input = state.file.code;
+            let usedImportStatement = input.slice(node.start, node.end);
+            let msg = `Only \`import { ${modulePathExport} } from '${matchingModulePath}'\` is supported. You used: \`${usedImportStatement}\``;
 
-              throw path.buildCodeFrameError(msg);
-            }
+            throw path.buildCodeFrameError(msg);
           }
 
           state.importId =
