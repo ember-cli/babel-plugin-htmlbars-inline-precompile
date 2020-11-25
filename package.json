@@ -10,7 +10,7 @@
     "test": "jest"
   },
   "devDependencies": {
-    "@babel/core": "^7.12.3",
+    "@babel/core": "^7.12.9",
     "@babel/plugin-transform-modules-amd": "^7.12.1",
     "@babel/plugin-transform-template-literals": "^7.12.1",
     "@babel/plugin-transform-unicode-escapes": "^7.12.1",
