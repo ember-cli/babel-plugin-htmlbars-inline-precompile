@@ -11,7 +11,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.12.13",
-    "@babel/plugin-transform-modules-amd": "^7.12.1",
+    "@babel/plugin-transform-modules-amd": "^7.12.13",
     "@babel/plugin-transform-template-literals": "^7.12.13",
     "@babel/plugin-transform-unicode-escapes": "^7.12.13",
     "common-tags": "^1.8.0",
