@@ -468,4 +468,63 @@ describe('htmlbars-inline-precompile', function () {
       expect(transformed).toContain(`hello {{firstName}}`);
     });
   });
+
+  describe('with Ember imports', function () {
+    it('adds an Ember import if useEmberModule is set to true', function () {
+      plugins = [
+        [
+          HTMLBarsInlinePrecompile,
+          {
+            precompile() {
+              return precompile.apply(this, arguments);
+            },
+
+            useEmberModule: true,
+          },
+        ],
+      ];
+
+      let transpiled = transform(
+        "import hbs from 'htmlbars-inline-precompile';\nvar compiled = hbs`hello`;"
+      );
+
+      expect(transpiled).toMatchInlineSnapshot(`
+        "import _Ember from \\"ember\\";
+
+        var compiled = _Ember.HTMLBars.template(
+        /*
+          hello
+        */
+        \\"precompiled(hello)\\");"
+      `);
+    });
+
+    it('Uses existing Ember import if one exists', function () {
+      plugins = [
+        [
+          HTMLBarsInlinePrecompile,
+          {
+            precompile() {
+              return precompile.apply(this, arguments);
+            },
+
+            useEmberModule: true,
+          },
+        ],
+      ];
+
+      let transpiled = transform(
+        "import Foo from 'ember';\nimport hbs from 'htmlbars-inline-precompile';\nvar compiled = hbs`hello`;"
+      );
+
+      expect(transpiled).toMatchInlineSnapshot(`
+        "import Foo from 'ember';
+        var compiled = Foo.HTMLBars.template(
+        /*
+          hello
+        */
+        \\"precompiled(hello)\\");"
+      `);
+    });
+  });
 });

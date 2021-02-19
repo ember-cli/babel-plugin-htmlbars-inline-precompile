@@ -50,7 +50,7 @@ module.exports = function (babel) {
     return result;
   }
 
-  function compileTemplate(precompile, template, _options) {
+  function compileTemplate(precompile, template, emberIdentifier, _options) {
     let options = Object.assign({ contents: template }, _options);
 
     let precompileResultString;
@@ -78,7 +78,7 @@ module.exports = function (babel) {
 
     return t.callExpression(
       t.memberExpression(
-        t.memberExpression(t.identifier('Ember'), t.identifier('HTMLBars')),
+        t.memberExpression(emberIdentifier, t.identifier('HTMLBars')),
         t.identifier('template')
       ),
       [templateExpression]
@@ -87,6 +87,44 @@ module.exports = function (babel) {
 
   return {
     visitor: {
+      Program(path, state) {
+        let options = state.opts || {};
+        let useEmberModule = Boolean(options.useEmberModule);
+
+        let preexistingEmberImportDeclaration = path
+          .get('body')
+          .filter((n) => n.type === 'ImportDeclaration')
+          .find((n) => n.get('source').get('value').node === 'ember');
+
+        if (
+          // an import was found
+          preexistingEmberImportDeclaration &&
+          // this accounts for `import from 'ember'` without a local identifier
+          preexistingEmberImportDeclaration.node.specifiers.length > 0
+        ) {
+          state.emberIdentifier = preexistingEmberImportDeclaration.node.specifiers[0].local;
+        }
+
+        state.ensureEmberImport = () => {
+          if (!useEmberModule) {
+            // ensures that we can always assume `state.emberIdentifier` is set
+            state.emberIdentifier = t.identifier('Ember');
+            return;
+          }
+
+          if (state.emberIdentifier) return;
+
+          state.emberIdentifier = path.scope.generateUidIdentifier('Ember');
+
+          let emberImport = t.importDeclaration(
+            [t.importDefaultSpecifier(state.emberIdentifier)],
+            t.stringLiteral('ember')
+          );
+
+          path.unshiftContainer('body', emberImport);
+        };
+      },
+
       ImportDeclaration(path, state) {
         let node = path.node;
 
@@ -154,7 +192,11 @@ module.exports = function (babel) {
 
         let { precompile, isProduction } = state.opts;
 
-        path.replaceWith(compileTemplate(precompile, template, { isProduction }));
+        state.ensureEmberImport();
+
+        path.replaceWith(
+          compileTemplate(precompile, template, state.emberIdentifier, { isProduction })
+        );
       },
 
       CallExpression(path, state) {
@@ -222,7 +264,9 @@ module.exports = function (babel) {
           options.isProduction = isProduction;
         }
 
-        path.replaceWith(compileTemplate(precompile, template, options));
+        state.ensureEmberImport();
+
+        path.replaceWith(compileTemplate(precompile, template, state.emberIdentifier, options));
       },
     },
   };
