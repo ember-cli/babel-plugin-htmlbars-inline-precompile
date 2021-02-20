@@ -129,6 +129,8 @@ module.exports = function (babel) {
         let node = path.node;
 
         let modules = state.opts.modules || {
+          'ember-cli-htmlbars': 'hbs',
+          'ember-cli-htmlbars-inline-precompile': 'default',
           'htmlbars-inline-precompile': 'default',
         };
 
@@ -153,14 +155,12 @@ module.exports = function (babel) {
               let msg = `Only \`import hbs from '${matchingModulePath}'\` is supported. You used: \`${usedImportStatement}\``;
               throw path.buildCodeFrameError(msg);
             }
-          } else {
-            if (!t.isImportSpecifier(first) || modulePathExport !== first.imported.name) {
-              let input = state.file.code;
-              let usedImportStatement = input.slice(node.start, node.end);
-              let msg = `Only \`import { ${modulePathExport} } from '${matchingModulePath}'\` is supported. You used: \`${usedImportStatement}\``;
+          } else if (!t.isImportSpecifier(first) || modulePathExport !== first.imported.name) {
+            let input = state.file.code;
+            let usedImportStatement = input.slice(node.start, node.end);
+            let msg = `Only \`import { ${modulePathExport} } from '${matchingModulePath}'\` is supported. You used: \`${usedImportStatement}\``;
 
-              throw path.buildCodeFrameError(msg);
-            }
+            throw path.buildCodeFrameError(msg);
           }
 
           state.importId =
