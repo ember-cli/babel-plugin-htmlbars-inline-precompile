@@ -81,6 +81,7 @@ describe('htmlbars-inline-precompile', function () {
           },
 
           isProduction: true,
+          scope: null,
         },
       ],
     ];
@@ -140,6 +141,8 @@ describe('htmlbars-inline-precompile', function () {
     expect(optionsReceived).toEqual({
       contents: source,
       isProduction: true,
+      scope: null,
+      strict: false,
     });
   });
 
@@ -246,6 +249,9 @@ describe('htmlbars-inline-precompile', function () {
 
     expect(optionsReceived).toEqual({
       contents: source,
+      isProduction: undefined,
+      scope: null,
+      strict: false,
     });
   });
 
@@ -687,6 +693,161 @@ describe('htmlbars-inline-precompile', function () {
         );
       }).toThrow(
         /Scope objects for `precompileTemplate` may only contain direct references to in-scope values, e.g. { bar } or { bar: bar }/
+      );
+    });
+  });
+
+  describe('with useTemplateLiteralProposalSemantics', function () {
+    beforeEach(() => {
+      plugins = [
+        [
+          HTMLBarsInlinePrecompile,
+          {
+            precompile() {
+              return precompile.apply(this, arguments);
+            },
+
+            modules: {
+              'ember-template-imports': {
+                export: 'hbs',
+                useTemplateLiteralProposalSemantics: 1,
+              },
+            },
+          },
+        ],
+        '@babel/plugin-proposal-class-properties',
+      ];
+    });
+
+    it('works with templates assigned to variables', function () {
+      let transpiled = transform(
+        `
+          import { hbs } from 'ember-template-imports';
+
+          const Foo = hbs\`hello\`;
+        `
+      );
+
+      expect(transpiled).toMatchInlineSnapshot(`
+        "import { templateOnly as _templateOnly } from \\"@ember/component/template-only\\";
+        import { setComponentTemplate as _setComponentTemplate } from \\"@ember/component\\";
+
+        const Foo = _templateOnly(\\"foo-bar\\", \\"Foo\\");
+
+        _setComponentTemplate(Ember.HTMLBars.template(
+        /*
+          hello
+        */
+        \\"precompiled(hello)\\"), Foo);"
+      `);
+    });
+
+    it('works with templates exported as the default', function () {
+      let transpiled = transform(
+        `
+          import { hbs } from 'ember-template-imports';
+
+          export default hbs\`hello\`;
+        `
+      );
+
+      expect(transpiled).toMatchInlineSnapshot(`
+        "import { setComponentTemplate as _setComponentTemplate } from \\"@ember/component\\";
+        import { templateOnly as _templateOnly } from \\"@ember/component/template-only\\";
+
+        const _fooBar = _templateOnly(\\"foo-bar\\", \\"_fooBar\\");
+
+        _setComponentTemplate(Ember.HTMLBars.template(
+        /*
+          hello
+        */
+        \\"precompiled(hello)\\"), _fooBar);
+
+        export default _fooBar;"
+      `);
+    });
+
+    it('works with templates assigned to classes', function () {
+      let transpiled = transform(
+        `
+          import { hbs } from 'ember-template-imports';
+
+          class Foo {
+            static template = hbs\`hello\`;
+          }
+        `
+      );
+
+      expect(transpiled).toMatchInlineSnapshot(`
+        "import { setComponentTemplate as _setComponentTemplate } from \\"@ember/component\\";
+
+        class Foo {}
+
+        _setComponentTemplate(Ember.HTMLBars.template(
+        /*
+          hello
+        */
+        \\"precompiled(hello)\\"), Foo);"
+      `);
+    });
+
+    it('correctly handles scope', function () {
+      let source = 'hello';
+      transform(
+        `
+          import { hbs } from 'ember-template-imports';
+          import baz from 'qux';
+
+          let foo = 123;
+          const bar = 456;
+
+          export default hbs\`${source}\`;
+        `
+      );
+
+      expect(optionsReceived).toEqual({
+        contents: source,
+        isProduction: undefined,
+        scope: ['baz', 'foo', 'bar'],
+        strict: true,
+      });
+    });
+
+    it('errors if used in an incorrect positions', function () {
+      expect(() => {
+        transform("import { hbs } from 'ember-template-imports';\nhbs`hello`;");
+      }).toThrow(
+        /Attempted to use `hbs` to define a template in an unsupported way. Templates defined using this helper must be:/
+      );
+
+      expect(() => {
+        transform("import { hbs } from 'ember-template-imports';\nfunc(hbs`hello`);");
+      }).toThrow(
+        /Attempted to use `hbs` to define a template in an unsupported way. Templates defined using this helper must be:/
+      );
+
+      expect(() => {
+        transform(
+          "import { hbs } from 'ember-template-imports';\n let Foo = class { static template = hbs`hello`; }"
+        );
+      }).toThrow(
+        /Attempted to use `hbs` to define a template in an unsupported way. Templates defined using this helper must be:/
+      );
+    });
+
+    it('errors if passed incorrect useTemplateLiteralProposalSemantics version', function () {
+      plugins[0][1].modules['ember-template-imports'].useTemplateLiteralProposalSemantics = true;
+
+      expect(() => {
+        transform(
+          `
+            import { hbs } from 'ember-template-imports';
+
+            const Foo = hbs\`hello\`;
+          `
+        );
+      }).toThrow(
+        /Passed an invalid version for useTemplateLiteralProposalSemantics. This option must be assign a version number. The current valid version numbers are: 1/
       );
     });
   });
