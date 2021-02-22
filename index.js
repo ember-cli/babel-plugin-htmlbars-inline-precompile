@@ -1,4 +1,5 @@
 'use strict';
+const { replaceTemplateLiteralProposal } = require('./src/template-literal-transform');
 
 module.exports = function (babel) {
   let t = babel.types;
@@ -111,245 +112,292 @@ module.exports = function (babel) {
     );
   }
 
-  return {
-    visitor: {
-      Program(path, state) {
-        let options = state.opts || {};
+  function getScope(scope) {
+    let names = [];
 
-        // Find/setup Ember global identifier
-        let useEmberModule = Boolean(options.useEmberModule);
-        let allAddedImports = {};
+    while (scope) {
+      for (let binding in scope.bindings) {
+        names.push(binding);
+      }
 
-        state.ensureImport = (exportName, moduleName) => {
-          let addedImports = (allAddedImports[moduleName] = allAddedImports[moduleName] || {});
+      scope = scope.parent;
+    }
 
-          if (addedImports[exportName]) return addedImports[exportName];
+    return names;
+  }
 
-          if (exportName === 'default' && moduleName === 'ember' && !useEmberModule) {
-            addedImports[exportName] = t.identifier('Ember');
-            return addedImports[exportName];
-          }
+  function replacePath(path, state, compiled, options) {
+    if (options.useTemplateLiteralProposalSemantics) {
+      replaceTemplateLiteralProposal(t, path, state, compiled, options);
+    } else {
+      path.replaceWith(compiled);
+    }
+  }
 
-          let importDeclarations = path.get('body').filter((n) => n.type === 'ImportDeclaration');
+  let visitor = {
+    Program(path, state) {
+      let options = state.opts || {};
 
-          let preexistingImportDeclaration = importDeclarations.find(
-            (n) => n.get('source').get('value').node === moduleName
-          );
+      // Find/setup Ember global identifier
+      let useEmberModule = Boolean(options.useEmberModule);
+      let allAddedImports = {};
 
-          if (preexistingImportDeclaration) {
-            let importSpecifier = preexistingImportDeclaration
-              .get('specifiers')
-              .find(({ node }) => {
-                return exportName === 'default'
-                  ? t.isImportDefaultSpecifier(node)
-                  : node.imported.name === exportName;
-              });
+      state.ensureImport = (exportName, moduleName) => {
+        let addedImports = (allAddedImports[moduleName] = allAddedImports[moduleName] || {});
 
-            if (importSpecifier) {
-              addedImports[exportName] = importSpecifier.node.local;
-            }
-          }
+        if (addedImports[exportName]) return addedImports[exportName];
 
-          if (!addedImports[exportName]) {
-            let uid = path.scope.generateUidIdentifier(
-              exportName === 'default' ? moduleName : exportName
-            );
-            addedImports[exportName] = uid;
-
-            let newImportSpecifier =
-              exportName === 'default'
-                ? t.importDefaultSpecifier(uid)
-                : t.importSpecifier(uid, t.identifier(exportName));
-
-            let newImport = t.importDeclaration([newImportSpecifier], t.stringLiteral(moduleName));
-            path.unshiftContainer('body', newImport);
-          }
-
+        if (exportName === 'default' && moduleName === 'ember' && !useEmberModule) {
+          addedImports[exportName] = t.identifier('Ember');
           return addedImports[exportName];
-        };
-
-        // Setup other module options and create cache for values
-        let modules = state.opts.modules || {
-          'htmlbars-inline-precompile': { export: 'default', shouldParseScope: false },
-        };
-
-        if (state.opts.modulePaths) {
-          let modulePaths = state.opts.modulePaths;
-
-          modulePaths.forEach((path) => (modules[path] = { export: 'default' }));
         }
 
-        let presentModules = new Map();
         let importDeclarations = path.get('body').filter((n) => n.type === 'ImportDeclaration');
 
-        for (let module in modules) {
-          let paths = importDeclarations.filter(
-            (path) => !path.removed && path.get('source').get('value').node === module
-          );
-
-          for (let path of paths) {
-            let options = modules[module];
-
-            if (typeof options === 'string') {
-              // Normalize 'moduleName': 'importSpecifier'
-              options = { export: options };
-            } else {
-              // else clone options so we don't mutate it
-              options = Object.assign({}, options);
-            }
-
-            let modulePathExport = options.export;
-            let importSpecifierPath = path
-              .get('specifiers')
-              .find(({ node }) =>
-                modulePathExport === 'default'
-                  ? t.isImportDefaultSpecifier(node)
-                  : node.imported && node.imported.name === modulePathExport
-              );
-
-            if (importSpecifierPath) {
-              let localName = importSpecifierPath.node.local.name;
-
-              options.modulePath = module;
-              options.originalName = localName;
-              let localImportId = path.scope.generateUidIdentifierBasedOnNode(path.node.id);
-
-              path.scope.rename(localName, localImportId);
-
-              // If it was the only specifier, remove the whole import, else
-              // remove the specifier
-              if (path.node.specifiers.length === 1) {
-                path.remove();
-              } else {
-                importSpecifierPath.remove();
-              }
-
-              presentModules.set(localImportId, options);
-            }
-          }
-        }
-
-        state.presentModules = presentModules;
-      },
-
-      TaggedTemplateExpression(path, state) {
-        let tagPath = path.get('tag');
-        let options = state.presentModules.get(tagPath.node.name);
-
-        if (!options) {
-          return;
-        }
-
-        if (options.disableTemplateLiteral) {
-          throw path.buildCodeFrameError(
-            `Attempted to use \`${options.originalName}\` as a template tag, but it can only be called as a function with a string passed to it: ${options.originalName}('content here')`
-          );
-        }
-
-        if (path.node.quasi.expressions.length) {
-          throw path.buildCodeFrameError(
-            'placeholders inside a tagged template string are not supported'
-          );
-        }
-
-        let template = path.node.quasi.quasis.map((quasi) => quasi.value.cooked).join('');
-
-        let { precompile, isProduction } = state.opts;
-
-        path.replaceWith(
-          compileTemplate(precompile, template, state.ensureImport('default', 'ember'), {
-            isProduction,
-          })
+        let preexistingImportDeclaration = importDeclarations.find(
+          (n) => n.get('source').get('value').node === moduleName
         );
-      },
 
-      CallExpression(path, state) {
-        let calleePath = path.get('callee');
-        let options = state.presentModules.get(calleePath.node.name);
+        if (preexistingImportDeclaration) {
+          let importSpecifier = preexistingImportDeclaration.get('specifiers').find(({ node }) => {
+            return exportName === 'default'
+              ? t.isImportDefaultSpecifier(node)
+              : node.imported.name === exportName;
+          });
 
-        if (!options) {
-          return;
-        }
-
-        if (options.disableFunctionCall) {
-          throw path.buildCodeFrameError(
-            `Attempted to use \`${options.originalName}\` as a function call, but it can only be used as a template tag: ${options.originalName}\`content here\``
-          );
-        }
-
-        let args = path.node.arguments;
-
-        let template;
-
-        switch (args[0] && args[0].type) {
-          case 'StringLiteral':
-            template = args[0].value;
-            break;
-          case 'TemplateLiteral':
-            if (args[0].expressions.length) {
-              throw path.buildCodeFrameError(
-                'placeholders inside a template string are not supported'
-              );
-            } else {
-              template = args[0].quasis.map((quasi) => quasi.value.cooked).join('');
-            }
-            break;
-          case 'TaggedTemplateExpression':
-            throw path.buildCodeFrameError(
-              `tagged template strings inside ${options.originalName} are not supported`
-            );
-          default:
-            throw path.buildCodeFrameError(
-              'hbs should be invoked with at least a single argument: the template string'
-            );
-        }
-
-        let compilerOptions;
-
-        switch (args.length) {
-          case 1:
-            compilerOptions = {};
-            break;
-          case 2: {
-            if (args[1].type !== 'ObjectExpression') {
-              throw path.buildCodeFrameError(
-                'hbs can only be invoked with 2 arguments: the template string, and any static options'
-              );
-            }
-
-            compilerOptions = parseObjectExpression(
-              path.buildCodeFrameError.bind(path),
-              options.originalName,
-              args[1],
-              true
-            );
-
-            break;
+          if (importSpecifier) {
+            addedImports[exportName] = importSpecifier.node.local;
           }
-          default:
+        }
+
+        if (!addedImports[exportName]) {
+          let uid = path.scope.generateUidIdentifier(
+            exportName === 'default' ? moduleName : exportName
+          );
+          addedImports[exportName] = uid;
+
+          let newImportSpecifier =
+            exportName === 'default'
+              ? t.importDefaultSpecifier(uid)
+              : t.importSpecifier(uid, t.identifier(exportName));
+
+          let newImport = t.importDeclaration([newImportSpecifier], t.stringLiteral(moduleName));
+          path.unshiftContainer('body', newImport);
+        }
+
+        return addedImports[exportName];
+      };
+
+      // Setup other module options and create cache for values
+      let modules = state.opts.modules || {
+        'htmlbars-inline-precompile': { export: 'default', shouldParseScope: false },
+      };
+
+      if (state.opts.modulePaths) {
+        let modulePaths = state.opts.modulePaths;
+
+        modulePaths.forEach((path) => (modules[path] = { export: 'default' }));
+      }
+
+      let presentModules = new Map();
+      let importDeclarations = path.get('body').filter((n) => n.type === 'ImportDeclaration');
+
+      for (let module in modules) {
+        let paths = importDeclarations.filter(
+          (path) => !path.removed && path.get('source').get('value').node === module
+        );
+
+        for (let path of paths) {
+          let options = modules[module];
+
+          if (typeof options === 'string') {
+            // Normalize 'moduleName': 'importSpecifier'
+            options = { export: options };
+          } else {
+            // else clone options so we don't mutate it
+            options = Object.assign({}, options);
+          }
+
+          let modulePathExport = options.export;
+          let importSpecifierPath = path
+            .get('specifiers')
+            .find(({ node }) =>
+              modulePathExport === 'default'
+                ? t.isImportDefaultSpecifier(node)
+                : node.imported && node.imported.name === modulePathExport
+            );
+
+          if (importSpecifierPath) {
+            let localName = importSpecifierPath.node.local.name;
+
+            options.modulePath = module;
+            options.originalName = localName;
+            let localImportId = path.scope.generateUidIdentifierBasedOnNode(path.node.id);
+
+            path.scope.rename(localName, localImportId);
+
+            // If it was the only specifier, remove the whole import, else
+            // remove the specifier
+            if (path.node.specifiers.length === 1) {
+              path.remove();
+            } else {
+              importSpecifierPath.remove();
+            }
+
+            presentModules.set(localImportId, options);
+          }
+        }
+      }
+
+      state.presentModules = presentModules;
+    },
+
+    ClassDeclaration(path, state) {
+      // Processing classes this way allows us to process ClassProperty nodes
+      // before other transforms, such as the class-properties transform
+      path.get('body.body').forEach((path) => {
+        if (path.type !== 'ClassProperty') return;
+
+        let keyPath = path.get('key');
+        let valuePath = path.get('value');
+
+        if (keyPath && visitor[keyPath.type]) {
+          visitor[keyPath.type](keyPath, state);
+        }
+
+        if (valuePath && visitor[valuePath.type]) {
+          visitor[valuePath.type](valuePath, state);
+        }
+      });
+    },
+
+    TaggedTemplateExpression(path, state) {
+      let tagPath = path.get('tag');
+      let options = state.presentModules.get(tagPath.node.name);
+
+      if (!options) {
+        return;
+      }
+
+      if (options.disableTemplateLiteral) {
+        throw path.buildCodeFrameError(
+          `Attempted to use \`${options.originalName}\` as a template tag, but it can only be called as a function with a string passed to it: ${options.originalName}('content here')`
+        );
+      }
+
+      if (path.node.quasi.expressions.length) {
+        throw path.buildCodeFrameError(
+          'placeholders inside a tagged template string are not supported'
+        );
+      }
+
+      let template = path.node.quasi.quasis.map((quasi) => quasi.value.cooked).join('');
+
+      let { precompile, isProduction } = state.opts;
+      let scope = options.useTemplateLiteralProposalSemantics ? getScope(path.scope) : null;
+      let strict = Boolean(options.useTemplateLiteralProposalSemantics);
+
+      let emberIdentifier = state.ensureImport('default', 'ember');
+
+      replacePath(
+        path,
+        state,
+        compileTemplate(precompile, template, emberIdentifier, { isProduction, scope, strict }),
+        options
+      );
+    },
+
+    CallExpression(path, state) {
+      let calleePath = path.get('callee');
+      let options = state.presentModules.get(calleePath.node.name);
+
+      if (!options) {
+        return;
+      }
+
+      if (options.disableFunctionCall) {
+        throw path.buildCodeFrameError(
+          `Attempted to use \`${options.originalName}\` as a function call, but it can only be used as a template tag: ${options.originalName}\`content here\``
+        );
+      }
+
+      let args = path.node.arguments;
+
+      let template;
+
+      switch (args[0] && args[0].type) {
+        case 'StringLiteral':
+          template = args[0].value;
+          break;
+        case 'TemplateLiteral':
+          if (args[0].expressions.length) {
+            throw path.buildCodeFrameError(
+              'placeholders inside a template string are not supported'
+            );
+          } else {
+            template = args[0].quasis.map((quasi) => quasi.value.cooked).join('');
+          }
+          break;
+        case 'TaggedTemplateExpression':
+          throw path.buildCodeFrameError(
+            `tagged template strings inside ${options.originalName} are not supported`
+          );
+        default:
+          throw path.buildCodeFrameError(
+            'hbs should be invoked with at least a single argument: the template string'
+          );
+      }
+
+      let compilerOptions;
+
+      switch (args.length) {
+        case 1:
+          compilerOptions = {};
+          break;
+        case 2: {
+          if (args[1].type !== 'ObjectExpression') {
             throw path.buildCodeFrameError(
               'hbs can only be invoked with 2 arguments: the template string, and any static options'
             );
+          }
+
+          compilerOptions = parseObjectExpression(
+            path.buildCodeFrameError.bind(path),
+            options.originalName,
+            args[1],
+            true
+          );
+
+          break;
         }
+        default:
+          throw path.buildCodeFrameError(
+            'hbs can only be invoked with 2 arguments: the template string, and any static options'
+          );
+      }
 
-        let { precompile, isProduction } = state.opts;
+      let { precompile, isProduction } = state.opts;
 
-        // allow the user specified value to "win" over ours
-        if (!('isProduction' in compilerOptions)) {
-          compilerOptions.isProduction = isProduction;
-        }
+      // allow the user specified value to "win" over ours
+      if (!('isProduction' in compilerOptions)) {
+        compilerOptions.isProduction = isProduction;
+      }
 
-        path.replaceWith(
-          compileTemplate(
-            precompile,
-            template,
-            state.ensureImport('default', 'ember'),
-            compilerOptions
-          )
-        );
-      },
+      replacePath(
+        path,
+        state,
+        compileTemplate(
+          precompile,
+          template,
+          state.ensureImport('default', 'ember'),
+          compilerOptions
+        ),
+        options
+      );
     },
   };
+
+  return { visitor };
 };
 
 module.exports._parallelBabel = {
