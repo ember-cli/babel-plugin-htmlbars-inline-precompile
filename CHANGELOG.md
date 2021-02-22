@@ -1,3 +1,15 @@
+## v4.3.0 (2021-02-22)
+
+#### :rocket: Enhancement
+* [#335](https://github.com/ember-cli/babel-plugin-htmlbars-inline-precompile/pull/335) Implements an option to support the template literal imports proposal ([@pzuraq](https://github.com/pzuraq))
+* [#334](https://github.com/ember-cli/babel-plugin-htmlbars-inline-precompile/pull/334) Add support for multiple imports ([@pzuraq](https://github.com/pzuraq))
+* [#333](https://github.com/ember-cli/babel-plugin-htmlbars-inline-precompile/pull/333) [FEAT] Add `shouldParseScope`, `disableTemplateTag`, `disableFunctionCall` options ([@pzuraq](https://github.com/pzuraq))
+* [#332](https://github.com/ember-cli/babel-plugin-htmlbars-inline-precompile/pull/332) Adds `useEmberModule` option ([@pzuraq](https://github.com/pzuraq))
+
+#### Committers: 1
+- Chris Garrett ([@pzuraq](https://github.com/pzuraq))
+
+
 ## v4.2.1 (2020-11-09)
 
 #### :bug: Bug Fix
