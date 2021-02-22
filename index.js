@@ -1,5 +1,6 @@
 'use strict';
 const { replaceTemplateLiteralProposal } = require('./src/template-literal-transform');
+const { replaceTemplateTagProposal } = require('./src/template-tag-transform');
 
 module.exports = function (babel) {
   let t = babel.types;
@@ -126,9 +127,22 @@ module.exports = function (babel) {
     return names;
   }
 
+  function shouldUseAutomaticScope(options) {
+    return options.useTemplateLiteralProposalSemantics || options.useTemplateTagProposalSemantics;
+  }
+
+  function shouldUseStrictMode(options) {
+    return (
+      Boolean(options.useTemplateLiteralProposalSemantics) ||
+      Boolean(options.useTemplateTagProposalSemantics)
+    );
+  }
+
   function replacePath(path, state, compiled, options) {
     if (options.useTemplateLiteralProposalSemantics) {
       replaceTemplateLiteralProposal(t, path, state, compiled, options);
+    } else if (options.useTemplateTagProposalSemantics) {
+      replaceTemplateTagProposal(t, path, state, compiled, options);
     } else {
       path.replaceWith(compiled);
     }
@@ -203,6 +217,27 @@ module.exports = function (babel) {
       let importDeclarations = path.get('body').filter((n) => n.type === 'ImportDeclaration');
 
       for (let module in modules) {
+        let options = modules[module];
+
+        if (options.useTemplateTagProposalSemantics) {
+          if (options.useTemplateLiteralProposalSemantics) {
+            throw path.buildCodeFrameError(
+              'Cannot use both the template literal and template tag syntax proposals together'
+            );
+          }
+
+          // template tags don't have an import
+          presentModules.set(
+            options.export,
+            Object.assign({}, options, {
+              modulePath: module,
+              originalName: options.export,
+            })
+          );
+
+          continue;
+        }
+
         let paths = importDeclarations.filter(
           (path) => !path.removed && path.get('source').get('value').node === module
         );
@@ -252,7 +287,7 @@ module.exports = function (babel) {
       state.presentModules = presentModules;
     },
 
-    ClassDeclaration(path, state) {
+    Class(path, state) {
       // Processing classes this way allows us to process ClassProperty nodes
       // before other transforms, such as the class-properties transform
       path.get('body.body').forEach((path) => {
@@ -294,8 +329,8 @@ module.exports = function (babel) {
       let template = path.node.quasi.quasis.map((quasi) => quasi.value.cooked).join('');
 
       let { precompile, isProduction } = state.opts;
-      let scope = options.useTemplateLiteralProposalSemantics ? getScope(path.scope) : null;
-      let strict = Boolean(options.useTemplateLiteralProposalSemantics);
+      let scope = shouldUseAutomaticScope(options) ? getScope(path.scope) : null;
+      let strict = shouldUseStrictMode(options);
 
       let emberIdentifier = state.ensureImport('default', 'ember');
 
@@ -381,6 +416,14 @@ module.exports = function (babel) {
       // allow the user specified value to "win" over ours
       if (!('isProduction' in compilerOptions)) {
         compilerOptions.isProduction = isProduction;
+      }
+
+      if (shouldUseAutomaticScope(options)) {
+        compilerOptions.scope = getScope(path.scope);
+      }
+
+      if (shouldUseStrictMode(options)) {
+        compilerOptions.strict = true;
       }
 
       replacePath(
