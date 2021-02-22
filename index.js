@@ -7,12 +7,12 @@ module.exports = function (babel) {
     `(function() {\n  throw new Error('ERROR_MESSAGE');\n})();`
   );
 
-  function parseExpression(buildError, node) {
+  function parseExpression(buildError, name, node) {
     switch (node.type) {
       case 'ObjectExpression':
-        return parseObjectExpression(buildError, node);
+        return parseObjectExpression(buildError, name, node);
       case 'ArrayExpression': {
-        return parseArrayExpression(buildError, node);
+        return parseArrayExpression(buildError, name, node);
       }
       case 'StringLiteral':
       case 'BooleanLiteral':
@@ -20,29 +20,55 @@ module.exports = function (babel) {
         return node.value;
       default:
         throw buildError(
-          `hbs can only accept static options but you passed ${JSON.stringify(node)}`
+          `${name} can only accept static options but you passed ${JSON.stringify(node)}`
         );
     }
   }
 
-  function parseArrayExpression(buildError, node) {
-    let result = node.elements.map((element) => parseExpression(buildError, element));
+  function parseArrayExpression(buildError, name, node) {
+    let result = node.elements.map((element) => parseExpression(buildError, name, element));
 
     return result;
   }
 
-  function parseObjectExpression(buildError, node) {
+  function parseScopeObject(buildError, name, node) {
+    if (node.type !== 'ObjectExpression') {
+      throw buildError(
+        `Scope objects for \`${name}\` must be an object expression containing only references to in-scope values`
+      );
+    }
+
+    return node.properties.map((prop) => {
+      let { key, value } = prop;
+
+      if (value.type !== 'Identifier' || value.name !== key.name) {
+        throw buildError(
+          `Scope objects for \`${name}\` may only contain direct references to in-scope values, e.g. { ${key.name} } or { ${key.name}: ${key.name} }`
+        );
+      }
+
+      return key.name;
+    });
+  }
+
+  function parseObjectExpression(buildError, name, node, shouldParseScope = false) {
     let result = {};
 
     node.properties.forEach((property) => {
       if (property.computed || !['Identifier', 'StringLiteral'].includes(property.key.type)) {
-        throw buildError('hbs can only accept static options');
+        throw buildError(`${name} can only accept static options`);
       }
 
       let propertyName =
         property.key.type === 'Identifier' ? property.key.name : property.key.value;
 
-      let value = parseExpression(buildError, property.value);
+      let value;
+
+      if (shouldParseScope && propertyName === 'scope') {
+        value = parseScopeObject(buildError, name, property.value);
+      } else {
+        value = parseExpression(buildError, name, property.value);
+      }
 
       result[propertyName] = value;
     });
@@ -89,12 +115,15 @@ module.exports = function (babel) {
     visitor: {
       Program(path, state) {
         let options = state.opts || {};
+
+        // Find/setup Ember global identifier
         let useEmberModule = Boolean(options.useEmberModule);
 
-        let preexistingEmberImportDeclaration = path
-          .get('body')
-          .filter((n) => n.type === 'ImportDeclaration')
-          .find((n) => n.get('source').get('value').node === 'ember');
+        let importDeclarations = path.get('body').filter((n) => n.type === 'ImportDeclaration');
+
+        let preexistingEmberImportDeclaration = importDeclarations.find(
+          (n) => n.get('source').get('value').node === 'ember'
+        );
 
         if (
           // an import was found
@@ -123,63 +152,92 @@ module.exports = function (babel) {
 
           path.unshiftContainer('body', emberImport);
         };
-      },
 
-      ImportDeclaration(path, state) {
-        let node = path.node;
-
+        // Setup other module options and create cache for values
         let modules = state.opts.modules || {
-          'htmlbars-inline-precompile': 'default',
+          'htmlbars-inline-precompile': { export: 'default', shouldParseScope: false },
         };
 
         if (state.opts.modulePaths) {
           let modulePaths = state.opts.modulePaths;
 
-          modulePaths.forEach((path) => (modules[path] = 'default'));
+          modulePaths.forEach((path) => (modules[path] = { export: 'default' }));
         }
 
-        let modulePaths = Object.keys(modules);
-        let matchingModulePath = modulePaths.find((value) => t.isLiteral(node.source, { value }));
-        let modulePathExport = modules[matchingModulePath];
+        let presentModules = new Map();
 
-        if (matchingModulePath) {
-          let first = node.specifiers && node.specifiers[0];
-          let localName = first.local.name;
+        for (let module in modules) {
+          let paths = importDeclarations.filter(
+            (path) => !path.removed && path.get('source').get('value').node === module
+          );
 
-          if (modulePathExport === 'default') {
-            if (!t.isImportDefaultSpecifier(first)) {
-              let input = state.file.code;
-              let usedImportStatement = input.slice(node.start, node.end);
-              let msg = `Only \`import hbs from '${matchingModulePath}'\` is supported. You used: \`${usedImportStatement}\``;
-              throw path.buildCodeFrameError(msg);
+          for (let path of paths) {
+            let { node } = path;
+            let options = modules[module];
+
+            if (typeof options === 'string') {
+              // Normalize 'moduleName': 'importSpecifier'
+              options = { export: options };
+            } else {
+              // else clone options so we don't mutate it
+              options = Object.assign({}, options);
             }
-          } else {
-            if (!t.isImportSpecifier(first) || modulePathExport !== first.imported.name) {
-              let input = state.file.code;
-              let usedImportStatement = input.slice(node.start, node.end);
-              let msg = `Only \`import { ${modulePathExport} } from '${matchingModulePath}'\` is supported. You used: \`${usedImportStatement}\``;
 
-              throw path.buildCodeFrameError(msg);
+            let modulePathExport = options.export;
+
+            let first = node.specifiers && node.specifiers[0];
+            let localName = first.local.name;
+
+            if (modulePathExport === 'default') {
+              let importDefaultSpecifier = node.specifiers.find((n) =>
+                t.isImportDefaultSpecifier(n)
+              );
+
+              if (!importDefaultSpecifier) {
+                let input = state.file.code;
+                let usedImportStatement = input.slice(node.start, node.end);
+                let msg = `Only \`import ${
+                  options.defaultName || localName
+                } from '${module}'\` is supported. You used: \`${usedImportStatement}\``;
+                throw path.buildCodeFrameError(msg);
+              }
+            } else {
+              if (!t.isImportSpecifier(first) || modulePathExport !== first.imported.name) {
+                let input = state.file.code;
+                let usedImportStatement = input.slice(node.start, node.end);
+                let msg = `Only \`import { ${modulePathExport} } from '${module}'\` is supported. You used: \`${usedImportStatement}\``;
+
+                throw path.buildCodeFrameError(msg);
+              }
             }
+
+            options.modulePath = module;
+            options.originalName = localName;
+            let localImportId = path.scope.generateUidIdentifierBasedOnNode(path.node.id);
+
+            path.scope.rename(localName, localImportId);
+
+            path.remove();
+
+            presentModules.set(localImportId, options);
           }
-
-          state.importId =
-            state.importId || path.scope.generateUidIdentifierBasedOnNode(path.node.id);
-
-          path.scope.rename(localName, state.importId.name);
-
-          path.remove();
         }
+
+        state.presentModules = presentModules;
       },
 
       TaggedTemplateExpression(path, state) {
-        if (!state.importId) {
+        let tagPath = path.get('tag');
+        let options = state.presentModules.get(tagPath.node.name);
+
+        if (!options) {
           return;
         }
 
-        let tagPath = path.get('tag');
-        if (tagPath.node.name !== state.importId.name) {
-          return;
+        if (options.disableTemplateLiteral) {
+          throw path.buildCodeFrameError(
+            `Attempted to use \`${options.originalName}\` as a template tag, but it can only be called as a function with a string passed to it: ${options.originalName}('content here')`
+          );
         }
 
         if (path.node.quasi.expressions.length) {
@@ -200,13 +258,17 @@ module.exports = function (babel) {
       },
 
       CallExpression(path, state) {
-        if (!state.importId) {
+        let calleePath = path.get('callee');
+        let options = state.presentModules.get(calleePath.node.name);
+
+        if (!options) {
           return;
         }
 
-        let calleePath = path.get('callee');
-        if (calleePath.node.name !== state.importId.name) {
-          return;
+        if (options.disableFunctionCall) {
+          throw path.buildCodeFrameError(
+            `Attempted to use \`${options.originalName}\` as a function call, but it can only be used as a template tag: ${options.originalName}\`content here\``
+          );
         }
 
         let args = path.node.arguments;
@@ -227,18 +289,20 @@ module.exports = function (babel) {
             }
             break;
           case 'TaggedTemplateExpression':
-            throw path.buildCodeFrameError('tagged template strings inside hbs are not supported');
+            throw path.buildCodeFrameError(
+              `tagged template strings inside ${options.originalName} are not supported`
+            );
           default:
             throw path.buildCodeFrameError(
               'hbs should be invoked with at least a single argument: the template string'
             );
         }
 
-        let options;
+        let compilerOptions;
 
         switch (args.length) {
           case 1:
-            options = {};
+            compilerOptions = {};
             break;
           case 2: {
             if (args[1].type !== 'ObjectExpression') {
@@ -247,7 +311,12 @@ module.exports = function (babel) {
               );
             }
 
-            options = parseObjectExpression(path.buildCodeFrameError.bind(path), args[1]);
+            compilerOptions = parseObjectExpression(
+              path.buildCodeFrameError.bind(path),
+              options.originalName,
+              args[1],
+              true
+            );
 
             break;
           }
@@ -260,13 +329,15 @@ module.exports = function (babel) {
         let { precompile, isProduction } = state.opts;
 
         // allow the user specified value to "win" over ours
-        if (!('isProduction' in options)) {
-          options.isProduction = isProduction;
+        if (!('isProduction' in compilerOptions)) {
+          compilerOptions.isProduction = isProduction;
         }
 
         state.ensureEmberImport();
 
-        path.replaceWith(compileTemplate(precompile, template, state.emberIdentifier, options));
+        path.replaceWith(
+          compileTemplate(precompile, template, state.emberIdentifier, compilerOptions)
+        );
       },
     },
   };

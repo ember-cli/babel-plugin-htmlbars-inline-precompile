@@ -338,6 +338,95 @@ describe('htmlbars-inline-precompile', function () {
     expect(transformed).toEqual(expected, 'tagged template is replaced');
   });
 
+  it('works with multiple imports from different modules', function () {
+    plugins = [
+      [
+        HTMLBarsInlinePrecompile,
+        {
+          precompile() {
+            return precompile.apply(this, arguments);
+          },
+
+          modules: {
+            'ember-cli-htmlbars': 'hbs',
+            '@ember/template-compilation': {
+              export: 'precompileTemplate',
+            },
+          },
+        },
+      ],
+    ];
+
+    let transformed = transform(`
+      import { hbs } from 'ember-cli-htmlbars';
+      import { precompileTemplate } from '@ember/template-compilation';
+      let a = hbs\`hello\`;
+      let b = precompileTemplate('hello');
+    `);
+
+    let expected = `let a = Ember.HTMLBars.template(\n/*\n  hello\n*/\n"precompiled(hello)");\nlet b = Ember.HTMLBars.template(\n/*\n  hello\n*/\n"precompiled(hello)");`;
+
+    expect(transformed).toEqual(expected, 'tagged template is replaced');
+  });
+
+  it('can disable template literal usage', function () {
+    plugins = [
+      [
+        HTMLBarsInlinePrecompile,
+        {
+          precompile() {
+            return precompile.apply(this, arguments);
+          },
+
+          modules: {
+            '@ember/template-compilation': {
+              export: 'precompileTemplate',
+              disableTemplateLiteral: true,
+            },
+          },
+        },
+      ],
+    ];
+
+    expect(() => {
+      transform(`
+        import { precompileTemplate } from '@ember/template-compilation';
+        let a = precompileTemplate\`hello\`;
+      `);
+    }).toThrow(
+      /Attempted to use `precompileTemplate` as a template tag, but it can only be called as a function with a string passed to it:/
+    );
+  });
+
+  it('can disable function call usage', function () {
+    plugins = [
+      [
+        HTMLBarsInlinePrecompile,
+        {
+          precompile() {
+            return precompile.apply(this, arguments);
+          },
+
+          modules: {
+            'ember-template-imports': {
+              export: 'hbs',
+              disableFunctionCall: true,
+            },
+          },
+        },
+      ],
+    ];
+
+    expect(() => {
+      transform(`
+        import { hbs } from 'ember-template-imports';
+        let a = hbs(\`hello\`);
+      `);
+    }).toThrow(
+      /Attempted to use `hbs` as a function call, but it can only be used as a template tag:/
+    );
+  });
+
   it('works properly when used along with modules transform', function () {
     plugins.push([TransformModules]);
     let transformed = transform(
@@ -525,6 +614,70 @@ describe('htmlbars-inline-precompile', function () {
         */
         \\"precompiled(hello)\\");"
       `);
+    });
+  });
+
+  describe('with transformScope: true', function () {
+    beforeEach(() => {
+      plugins = [
+        [
+          HTMLBarsInlinePrecompile,
+          {
+            precompile() {
+              return precompile.apply(this, arguments);
+            },
+
+            modules: {
+              '@ember/template-compilation': {
+                export: 'precompileTemplate',
+                shouldParseScope: true,
+              },
+            },
+          },
+        ],
+      ];
+    });
+
+    it('correctly handles scope', function () {
+      let source = 'hello';
+      transform(
+        `import { precompileTemplate } from '@ember/template-compilation';\nvar compiled = precompileTemplate('${source}', { scope: { foo, bar } });`
+      );
+
+      expect(optionsReceived).toEqual({
+        contents: source,
+        scope: ['foo', 'bar'],
+      });
+    });
+
+    it('errors if scope contains mismatched keys/values', function () {
+      expect(() => {
+        transform(
+          "import { precompileTemplate } from '@ember/template-compilation';\nvar compiled = precompileTemplate('hello', { scope: { foo: bar } });"
+        );
+      }).toThrow(
+        /Scope objects for `precompileTemplate` may only contain direct references to in-scope values, e.g. { foo } or { foo: foo }/
+      );
+    });
+
+    it('errors if scope is not an object', function () {
+      expect(() => {
+        transform(
+          "import { precompileTemplate } from '@ember/template-compilation';\nvar compiled = precompileTemplate('hello', { scope: ['foo', 'bar'] });"
+        );
+      }).toThrow(
+        /Scope objects for `precompileTemplate` must be an object expression containing only references to in-scope values/
+      );
+    });
+
+    it('errors if scope contains any non-reference values', function () {
+      expect(() => {
+        transform(
+          "import { precompileTemplate } from '@ember/template-compilation';\nvar compiled = precompileTemplate('hello', { scope: { foo, bar: 123 } });"
+        );
+      }).toThrow(
+        /Scope objects for `precompileTemplate` may only contain direct references to in-scope values, e.g. { bar } or { bar: bar }/
+      );
     });
   });
 });
