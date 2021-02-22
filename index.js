@@ -118,39 +118,54 @@ module.exports = function (babel) {
 
         // Find/setup Ember global identifier
         let useEmberModule = Boolean(options.useEmberModule);
+        let allAddedImports = {};
 
-        let importDeclarations = path.get('body').filter((n) => n.type === 'ImportDeclaration');
+        state.ensureImport = (exportName, moduleName) => {
+          let addedImports = (allAddedImports[moduleName] = allAddedImports[moduleName] || {});
 
-        let preexistingEmberImportDeclaration = importDeclarations.find(
-          (n) => n.get('source').get('value').node === 'ember'
-        );
+          if (addedImports[exportName]) return addedImports[exportName];
 
-        if (
-          // an import was found
-          preexistingEmberImportDeclaration &&
-          // this accounts for `import from 'ember'` without a local identifier
-          preexistingEmberImportDeclaration.node.specifiers.length > 0
-        ) {
-          state.emberIdentifier = preexistingEmberImportDeclaration.node.specifiers[0].local;
-        }
-
-        state.ensureEmberImport = () => {
-          if (!useEmberModule) {
-            // ensures that we can always assume `state.emberIdentifier` is set
-            state.emberIdentifier = t.identifier('Ember');
-            return;
+          if (exportName === 'default' && moduleName === 'ember' && !useEmberModule) {
+            addedImports[exportName] = t.identifier('Ember');
+            return addedImports[exportName];
           }
 
-          if (state.emberIdentifier) return;
+          let importDeclarations = path.get('body').filter((n) => n.type === 'ImportDeclaration');
 
-          state.emberIdentifier = path.scope.generateUidIdentifier('Ember');
-
-          let emberImport = t.importDeclaration(
-            [t.importDefaultSpecifier(state.emberIdentifier)],
-            t.stringLiteral('ember')
+          let preexistingImportDeclaration = importDeclarations.find(
+            (n) => n.get('source').get('value').node === moduleName
           );
 
-          path.unshiftContainer('body', emberImport);
+          if (preexistingImportDeclaration) {
+            let importSpecifier = preexistingImportDeclaration
+              .get('specifiers')
+              .find(({ node }) => {
+                return exportName === 'default'
+                  ? t.isImportDefaultSpecifier(node)
+                  : node.imported.name === exportName;
+              });
+
+            if (importSpecifier) {
+              addedImports[exportName] = importSpecifier.node.local;
+            }
+          }
+
+          if (!addedImports[exportName]) {
+            let uid = path.scope.generateUidIdentifier(
+              exportName === 'default' ? moduleName : exportName
+            );
+            addedImports[exportName] = uid;
+
+            let newImportSpecifier =
+              exportName === 'default'
+                ? t.importDefaultSpecifier(uid)
+                : t.importSpecifier(uid, t.identifier(exportName));
+
+            let newImport = t.importDeclaration([newImportSpecifier], t.stringLiteral(moduleName));
+            path.unshiftContainer('body', newImport);
+          }
+
+          return addedImports[exportName];
         };
 
         // Setup other module options and create cache for values
@@ -165,6 +180,7 @@ module.exports = function (babel) {
         }
 
         let presentModules = new Map();
+        let importDeclarations = path.get('body').filter((n) => n.type === 'ImportDeclaration');
 
         for (let module in modules) {
           let paths = importDeclarations.filter(
@@ -172,7 +188,6 @@ module.exports = function (babel) {
           );
 
           for (let path of paths) {
-            let { node } = path;
             let options = modules[module];
 
             if (typeof options === 'string') {
@@ -184,42 +199,33 @@ module.exports = function (babel) {
             }
 
             let modulePathExport = options.export;
-
-            let first = node.specifiers && node.specifiers[0];
-            let localName = first.local.name;
-
-            if (modulePathExport === 'default') {
-              let importDefaultSpecifier = node.specifiers.find((n) =>
-                t.isImportDefaultSpecifier(n)
+            let importSpecifierPath = path
+              .get('specifiers')
+              .find(({ node }) =>
+                modulePathExport === 'default'
+                  ? t.isImportDefaultSpecifier(node)
+                  : node.imported && node.imported.name === modulePathExport
               );
 
-              if (!importDefaultSpecifier) {
-                let input = state.file.code;
-                let usedImportStatement = input.slice(node.start, node.end);
-                let msg = `Only \`import ${
-                  options.defaultName || localName
-                } from '${module}'\` is supported. You used: \`${usedImportStatement}\``;
-                throw path.buildCodeFrameError(msg);
-              }
-            } else {
-              if (!t.isImportSpecifier(first) || modulePathExport !== first.imported.name) {
-                let input = state.file.code;
-                let usedImportStatement = input.slice(node.start, node.end);
-                let msg = `Only \`import { ${modulePathExport} } from '${module}'\` is supported. You used: \`${usedImportStatement}\``;
+            if (importSpecifierPath) {
+              let localName = importSpecifierPath.node.local.name;
 
-                throw path.buildCodeFrameError(msg);
+              options.modulePath = module;
+              options.originalName = localName;
+              let localImportId = path.scope.generateUidIdentifierBasedOnNode(path.node.id);
+
+              path.scope.rename(localName, localImportId);
+
+              // If it was the only specifier, remove the whole import, else
+              // remove the specifier
+              if (path.node.specifiers.length === 1) {
+                path.remove();
+              } else {
+                importSpecifierPath.remove();
               }
+
+              presentModules.set(localImportId, options);
             }
-
-            options.modulePath = module;
-            options.originalName = localName;
-            let localImportId = path.scope.generateUidIdentifierBasedOnNode(path.node.id);
-
-            path.scope.rename(localName, localImportId);
-
-            path.remove();
-
-            presentModules.set(localImportId, options);
           }
         }
 
@@ -250,10 +256,10 @@ module.exports = function (babel) {
 
         let { precompile, isProduction } = state.opts;
 
-        state.ensureEmberImport();
-
         path.replaceWith(
-          compileTemplate(precompile, template, state.emberIdentifier, { isProduction })
+          compileTemplate(precompile, template, state.ensureImport('default', 'ember'), {
+            isProduction,
+          })
         );
       },
 
@@ -333,10 +339,13 @@ module.exports = function (babel) {
           compilerOptions.isProduction = isProduction;
         }
 
-        state.ensureEmberImport();
-
         path.replaceWith(
-          compileTemplate(precompile, template, state.emberIdentifier, compilerOptions)
+          compileTemplate(
+            precompile,
+            template,
+            state.ensureImport('default', 'ember'),
+            compilerOptions
+          )
         );
       },
     },

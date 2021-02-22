@@ -257,34 +257,6 @@ describe('htmlbars-inline-precompile', function () {
     expect(transformed).toEqual("import Ember from 'ember';", 'strips import statement');
   });
 
-  it('throws error when import statement is not using default specifier', function () {
-    expect(() => transform("import { hbs } from 'htmlbars-inline-precompile'")).toThrow(
-      /Only `import hbs from 'htmlbars-inline-precompile'` is supported/,
-      'needed import syntax is present'
-    );
-
-    expect(() => transform("import { hbs } from 'htmlbars-inline-precompile'")).toThrow(
-      /You used: `import { hbs } from 'htmlbars-inline-precompile'`/,
-      'used import syntax is present'
-    );
-  });
-
-  it('throws error when import statement is not using custom specifier', function () {
-    plugins[0][1].modules = {
-      'foo-bar': 'baz',
-    };
-
-    expect(() => transform("import hbs from 'foo-bar'")).toThrow(
-      /Only `import { baz } from 'foo-bar'` is supported/,
-      'needed import syntax is present'
-    );
-
-    expect(() => transform("import hbs from 'foo-bar'")).toThrow(
-      /You used: `import hbs from 'foo-bar'`/,
-      'used import syntax is present'
-    );
-  });
-
   it('replaces tagged template expressions with precompiled version', function () {
     let transformed = transform(
       "import hbs from 'htmlbars-inline-precompile';\nvar compiled = hbs`hello`;"
@@ -336,6 +308,44 @@ describe('htmlbars-inline-precompile', function () {
     let expected = `let a = Ember.HTMLBars.template(\n/*\n  hello\n*/\n"precompiled(hello)");\nlet b = Ember.HTMLBars.template(\n/*\n  hello\n*/\n"precompiled(hello)");`;
 
     expect(transformed).toEqual(expected, 'tagged template is replaced');
+  });
+
+  it('does not fully remove imports that have other imports', function () {
+    plugins[0][1].modules = {
+      precompile1: 'default',
+      precompile2: 'hbs',
+      precompile3: 'hbs',
+    };
+
+    let transformed = transform(`
+      import hbs, { foo } from 'precompile1';
+      import { hbs as otherHbs, bar } from 'precompile2';
+      import baz, { hbs as otherOtherHbs } from 'precompile3';
+      let a = hbs\`hello\`;
+      let b = otherHbs\`hello\`;
+      let c = otherOtherHbs\`hello\`;
+    `);
+
+    expect(transformed).toMatchInlineSnapshot(`
+      "import { foo } from 'precompile1';
+      import { bar } from 'precompile2';
+      import baz from 'precompile3';
+      let a = Ember.HTMLBars.template(
+      /*
+        hello
+      */
+      \\"precompiled(hello)\\");
+      let b = Ember.HTMLBars.template(
+      /*
+        hello
+      */
+      \\"precompiled(hello)\\");
+      let c = Ember.HTMLBars.template(
+      /*
+        hello
+      */
+      \\"precompiled(hello)\\");"
+    `);
   });
 
   it('works with multiple imports from different modules', function () {
@@ -578,9 +588,9 @@ describe('htmlbars-inline-precompile', function () {
       );
 
       expect(transpiled).toMatchInlineSnapshot(`
-        "import _Ember from \\"ember\\";
+        "import _ember from \\"ember\\";
 
-        var compiled = _Ember.HTMLBars.template(
+        var compiled = _ember.HTMLBars.template(
         /*
           hello
         */
