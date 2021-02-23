@@ -152,12 +152,24 @@ module.exports = function (babel) {
 
       // Find/setup Ember global identifier
       let useEmberModule = Boolean(options.useEmberModule);
+      let moduleOverrides = options.moduleOverrides;
+
       let allAddedImports = {};
 
       state.ensureImport = (exportName, moduleName) => {
         let addedImports = (allAddedImports[moduleName] = allAddedImports[moduleName] || {});
 
         if (addedImports[exportName]) return addedImports[exportName];
+
+        if (moduleOverrides) {
+          let glimmerModule = moduleOverrides[moduleName];
+          let glimmerExport = glimmerModule && glimmerModule[exportName];
+
+          if (glimmerExport) {
+            exportName = glimmerExport[0];
+            moduleName = glimmerExport[1];
+          }
+        }
 
         if (exportName === 'default' && moduleName === 'ember' && !useEmberModule) {
           addedImports[exportName] = t.identifier('Ember');

@@ -587,6 +587,36 @@ describe('htmlbars-inline-precompile', function () {
     ).toThrow(/placeholders inside a tagged template string are not supported/);
   });
 
+  it('works with glimmer modules', function () {
+    plugins[0][1].moduleOverrides = {
+      '@ember/component/template-only': {
+        default: ['templateOnlyComponent', '@glimmer/core'],
+      },
+      '@ember/template-factory': {
+        createTemplateFactory: ['createTemplateFactory', '@glimmer/core'],
+      },
+      '@ember/component': {
+        setComponentTemplate: ['setComponentTemplate', '@glimmer/core'],
+      },
+    };
+
+    let transformed = transform(stripIndent`
+      import hbs from 'htmlbars-inline-precompile';
+
+      const template = hbs\`hello\`;
+    `);
+
+    expect(transformed).toEqual(stripIndent`
+      import { createTemplateFactory as _createTemplateFactory } from "@glimmer/core";
+
+      const template = _createTemplateFactory(
+      /*
+        hello
+      */
+      "precompiled(hello)");
+    `);
+  });
+
   describe('caching', function () {
     it('include `baseDir` function for caching', function () {
       expect(HTMLBarsInlinePrecompile.baseDir()).toEqual(path.resolve(__dirname, '..'));
