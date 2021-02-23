@@ -1,6 +1,7 @@
 'use strict';
 const { replaceTemplateLiteralProposal } = require('./src/template-literal-transform');
 const { replaceTemplateTagProposal } = require('./src/template-tag-transform');
+const { registerRefs } = require('./src/util');
 
 module.exports = function (babel) {
   let t = babel.types;
@@ -78,7 +79,7 @@ module.exports = function (babel) {
     return result;
   }
 
-  function compileTemplate(precompile, template, emberIdentifier, _options) {
+  function compileTemplate(precompile, template, templateCompilerIdentifier, _options) {
     let options = Object.assign({ contents: template }, _options);
 
     let precompileResultString;
@@ -104,13 +105,7 @@ module.exports = function (babel) {
       /* line comment? */ false
     );
 
-    return t.callExpression(
-      t.memberExpression(
-        t.memberExpression(emberIdentifier, t.identifier('HTMLBars')),
-        t.identifier('template')
-      ),
-      [templateExpression]
-    );
+    return t.callExpression(templateCompilerIdentifier, [templateExpression]);
   }
 
   function getScope(scope) {
@@ -144,7 +139,10 @@ module.exports = function (babel) {
     } else if (options.useTemplateTagProposalSemantics) {
       replaceTemplateTagProposal(t, path, state, compiled, options);
     } else {
-      path.replaceWith(compiled);
+      registerRefs(path.replaceWith(compiled), (newPath) => {
+        // If we use `insertRuntimeErrors` then the node won't exist
+        return newPath.node ? [newPath.get('callee')] : [];
+      });
     }
   }
 
@@ -197,6 +195,7 @@ module.exports = function (babel) {
 
           let newImport = t.importDeclaration([newImportSpecifier], t.stringLiteral(moduleName));
           path.unshiftContainer('body', newImport);
+          path.scope.registerBinding('module', path.get('body.0.specifiers.0'));
         }
 
         return addedImports[exportName];
@@ -332,7 +331,7 @@ module.exports = function (babel) {
       let scope = shouldUseAutomaticScope(options) ? getScope(path.scope) : null;
       let strict = shouldUseStrictMode(options);
 
-      let emberIdentifier = state.ensureImport('default', 'ember');
+      let emberIdentifier = state.ensureImport('createTemplateFactory', '@ember/template-factory');
 
       replacePath(
         path,
@@ -419,10 +418,14 @@ module.exports = function (babel) {
       }
 
       if (shouldUseAutomaticScope(options)) {
+        // If using the transform semantics, then users are not expected to pass
+        // options, so we override any existing scope
         compilerOptions.scope = getScope(path.scope);
       }
 
       if (shouldUseStrictMode(options)) {
+        // If using the transform semantics, then users are not expected to pass
+        // options, so we override any existing strict option
         compilerOptions.strict = true;
       }
 
@@ -432,7 +435,7 @@ module.exports = function (babel) {
         compileTemplate(
           precompile,
           template,
-          state.ensureImport('default', 'ember'),
+          state.ensureImport('createTemplateFactory', '@ember/template-factory'),
           compilerOptions
         ),
         options

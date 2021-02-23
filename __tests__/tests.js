@@ -50,7 +50,9 @@ describe('htmlbars-inline-precompile', function () {
     );
 
     expect(transpiled).toMatchInlineSnapshot(`
-      "var compiled = Ember.HTMLBars.template(
+      "import { createTemplateFactory as _createTemplateFactory } from \\"@ember/template-factory\\";
+
+      var compiled = _createTemplateFactory(
       /*
         hello
       */
@@ -198,8 +200,10 @@ describe('htmlbars-inline-precompile', function () {
     `);
 
     expect(transformed).toEqual(stripIndent`
+      import { createTemplateFactory as _createTemplateFactory } from "@ember/template-factory";
+
       if ('foo') {
-        const template = Ember.HTMLBars.template(
+        const template = _createTemplateFactory(
         /*
           hello
         */
@@ -218,7 +222,9 @@ describe('htmlbars-inline-precompile', function () {
     );
 
     expect(transformed).toMatchInlineSnapshot(`
-      "var compiled = function () {
+      "import { createTemplateFactory as _createTemplateFactory } from \\"@ember/template-factory\\";
+
+      var compiled = function () {
         throw new Error(\\"NOOOOOOOOOOOOOOOOOOOOOO\\");
       }();"
     `);
@@ -233,8 +239,10 @@ describe('htmlbars-inline-precompile', function () {
     `);
 
     expect(transformed).toEqual(stripIndent`
+      import { createTemplateFactory as _createTemplateFactory } from "@ember/template-factory";
+
       if ('foo') {
-        const template = Ember.HTMLBars.template(
+        const template = _createTemplateFactory(
         /*
           hello *\\/
         */
@@ -268,10 +276,15 @@ describe('htmlbars-inline-precompile', function () {
       "import hbs from 'htmlbars-inline-precompile';\nvar compiled = hbs`hello`;"
     );
 
-    expect(transformed).toEqual(
-      'var compiled = Ember.HTMLBars.template(\n/*\n  hello\n*/\n"precompiled(hello)");',
-      'tagged template is replaced'
-    );
+    expect(transformed).toMatchInlineSnapshot(`
+      "import { createTemplateFactory as _createTemplateFactory } from \\"@ember/template-factory\\";
+
+      var compiled = _createTemplateFactory(
+      /*
+        hello
+      */
+      \\"precompiled(hello)\\");"
+    `);
   });
 
   it('replaces tagged template expressions with precompiled version for custom import paths with named exports', function () {
@@ -281,9 +294,15 @@ describe('htmlbars-inline-precompile', function () {
 
     let transformed = transform("import { baz } from 'foo-bar';\nvar compiled = baz`hello`;");
 
-    expect(transformed).toEqual(
-      'var compiled = Ember.HTMLBars.template(\n/*\n  hello\n*/\n"precompiled(hello)");'
-    );
+    expect(transformed).toMatchInlineSnapshot(`
+      "import { createTemplateFactory as _createTemplateFactory } from \\"@ember/template-factory\\";
+
+      var compiled = _createTemplateFactory(
+      /*
+        hello
+      */
+      \\"precompiled(hello)\\");"
+    `);
   });
 
   it('replaces tagged template expressions with precompiled version for custom import paths', function () {
@@ -293,9 +312,15 @@ describe('htmlbars-inline-precompile', function () {
       "import hbs from 'ember-cli-htmlbars-inline-precompile';\nvar compiled = hbs`hello`;"
     );
 
-    expect(transformed).toEqual(
-      'var compiled = Ember.HTMLBars.template(\n/*\n  hello\n*/\n"precompiled(hello)");'
-    );
+    expect(transformed).toMatchInlineSnapshot(`
+      "import { createTemplateFactory as _createTemplateFactory } from \\"@ember/template-factory\\";
+
+      var compiled = _createTemplateFactory(
+      /*
+        hello
+      */
+      \\"precompiled(hello)\\");"
+    `);
   });
 
   it('does not cause an error when no import is found', function () {
@@ -311,9 +336,21 @@ describe('htmlbars-inline-precompile', function () {
       let b = otherHbs\`hello\`;
     `);
 
-    let expected = `let a = Ember.HTMLBars.template(\n/*\n  hello\n*/\n"precompiled(hello)");\nlet b = Ember.HTMLBars.template(\n/*\n  hello\n*/\n"precompiled(hello)");`;
+    expect(transformed).toMatchInlineSnapshot(`
+      "import { createTemplateFactory as _createTemplateFactory } from \\"@ember/template-factory\\";
 
-    expect(transformed).toEqual(expected, 'tagged template is replaced');
+      let a = _createTemplateFactory(
+      /*
+        hello
+      */
+      \\"precompiled(hello)\\");
+
+      let b = _createTemplateFactory(
+      /*
+        hello
+      */
+      \\"precompiled(hello)\\");"
+    `);
   });
 
   it('does not fully remove imports that have other imports', function () {
@@ -333,20 +370,24 @@ describe('htmlbars-inline-precompile', function () {
     `);
 
     expect(transformed).toMatchInlineSnapshot(`
-      "import { foo } from 'precompile1';
+      "import { createTemplateFactory as _createTemplateFactory } from \\"@ember/template-factory\\";
+      import { foo } from 'precompile1';
       import { bar } from 'precompile2';
       import baz from 'precompile3';
-      let a = Ember.HTMLBars.template(
+
+      let a = _createTemplateFactory(
       /*
         hello
       */
       \\"precompiled(hello)\\");
-      let b = Ember.HTMLBars.template(
+
+      let b = _createTemplateFactory(
       /*
         hello
       */
       \\"precompiled(hello)\\");
-      let c = Ember.HTMLBars.template(
+
+      let c = _createTemplateFactory(
       /*
         hello
       */
@@ -380,9 +421,21 @@ describe('htmlbars-inline-precompile', function () {
       let b = precompileTemplate('hello');
     `);
 
-    let expected = `let a = Ember.HTMLBars.template(\n/*\n  hello\n*/\n"precompiled(hello)");\nlet b = Ember.HTMLBars.template(\n/*\n  hello\n*/\n"precompiled(hello)");`;
+    expect(transformed).toMatchInlineSnapshot(`
+      "import { createTemplateFactory as _createTemplateFactory } from \\"@ember/template-factory\\";
 
-    expect(transformed).toEqual(expected, 'tagged template is replaced');
+      let a = _createTemplateFactory(
+      /*
+        hello
+      */
+      \\"precompiled(hello)\\");
+
+      let b = _createTemplateFactory(
+      /*
+        hello
+      */
+      \\"precompiled(hello)\\");"
+    `);
   });
 
   it('can disable template literal usage', function () {
@@ -449,10 +502,17 @@ describe('htmlbars-inline-precompile', function () {
       "import hbs from 'htmlbars-inline-precompile';\nvar compiled = hbs`hello`;"
     );
 
-    expect(transformed).toEqual(
-      `define([], function () {\n  "use strict";\n\n  var compiled = Ember.HTMLBars.template(\n  /*\n    hello\n  */\n  "precompiled(hello)");\n});`,
-      'tagged template is replaced'
-    );
+    expect(transformed).toMatchInlineSnapshot(`
+      "define([\\"@ember/template-factory\\"], function (_templateFactory) {
+        \\"use strict\\";
+
+        var compiled = (0, _templateFactory.createTemplateFactory)(
+        /*
+          hello
+        */
+        \\"precompiled(hello)\\");
+      });"
+    `);
   });
 
   it('works properly when used after modules transform', function () {
@@ -461,10 +521,17 @@ describe('htmlbars-inline-precompile', function () {
       "import hbs from 'htmlbars-inline-precompile';\nvar compiled = hbs`hello`;"
     );
 
-    expect(transformed).toEqual(
-      `define([], function () {\n  "use strict";\n\n  var compiled = Ember.HTMLBars.template(\n  /*\n    hello\n  */\n  "precompiled(hello)");\n});`,
-      'tagged template is replaced'
-    );
+    expect(transformed).toMatchInlineSnapshot(`
+      "define([\\"@ember/template-factory\\"], function (_templateFactory) {
+        \\"use strict\\";
+
+        var compiled = (0, _templateFactory.createTemplateFactory)(
+        /*
+          hello
+        */
+        \\"precompiled(hello)\\");
+      });"
+    `);
   });
 
   it('works properly when used along with @babel/plugin-transform-unicode-escapes', function () {
@@ -474,7 +541,9 @@ describe('htmlbars-inline-precompile', function () {
     );
 
     expect(transformed).toMatchInlineSnapshot(`
-      "var compiled = Ember.HTMLBars.template(
+      "import { createTemplateFactory as _createTemplateFactory } from \\"@ember/template-factory\\";
+
+      var compiled = _createTemplateFactory(
       /*
         some emoji goes 💥
       */
@@ -488,10 +557,15 @@ describe('htmlbars-inline-precompile', function () {
       "import hbs from 'htmlbars-inline-precompile';\nvar compiled = hbs`hello`;"
     );
 
-    expect(transformed).toEqual(
-      'var compiled = Ember.HTMLBars.template(\n/*\n  hello\n*/\n"precompiled(hello)");',
-      'tagged template is replaced'
-    );
+    expect(transformed).toMatchInlineSnapshot(`
+      "import { createTemplateFactory as _createTemplateFactory } from \\"@ember/template-factory\\";
+
+      var compiled = _createTemplateFactory(
+      /*
+        hello
+      */
+      \\"precompiled(hello)\\");"
+    `);
   });
 
   it("doesn't replace unrelated tagged template strings", function () {
@@ -525,10 +599,15 @@ describe('htmlbars-inline-precompile', function () {
         "import hbs from 'htmlbars-inline-precompile';\nvar compiled = hbs('hello');"
       );
 
-      expect(transformed).toEqual(
-        'var compiled = Ember.HTMLBars.template(\n/*\n  hello\n*/\n"precompiled(hello)");',
-        'tagged template is replaced'
-      );
+      expect(transformed).toMatchInlineSnapshot(`
+        "import { createTemplateFactory as _createTemplateFactory } from \\"@ember/template-factory\\";
+
+        var compiled = _createTemplateFactory(
+        /*
+          hello
+        */
+        \\"precompiled(hello)\\");"
+      `);
     });
 
     it('warns when the second argument is not an object', function () {
@@ -552,6 +631,28 @@ describe('htmlbars-inline-precompile', function () {
         transform("import hbs from 'htmlbars-inline-precompile';\nvar compiled = hbs();")
       ).toThrow(/hbs should be invoked with at least a single argument: the template string/);
     });
+
+    it('works with babel-plugin-ember-modules-api-polyfill', function () {
+      plugins.push('babel-plugin-ember-modules-api-polyfill');
+
+      precompile = (template) => {
+        return `function() { return "${template}"; }`;
+      };
+
+      let transpiled = transform(
+        "import hbs from 'htmlbars-inline-precompile';\nvar compiled = hbs`hello`;"
+      );
+
+      expect(transpiled).toMatchInlineSnapshot(`
+        "var compiled = Ember.HTMLBars.template(
+        /*
+          hello
+        */
+        function () {
+          return \\"hello\\";
+        });"
+      `);
+    });
   });
 
   describe('with ember-source', function () {
@@ -571,65 +672,6 @@ describe('htmlbars-inline-precompile', function () {
       `);
 
       expect(transformed).toContain(`hello {{firstName}}`);
-    });
-  });
-
-  describe('with Ember imports', function () {
-    it('adds an Ember import if useEmberModule is set to true', function () {
-      plugins = [
-        [
-          HTMLBarsInlinePrecompile,
-          {
-            precompile() {
-              return precompile.apply(this, arguments);
-            },
-
-            useEmberModule: true,
-          },
-        ],
-      ];
-
-      let transpiled = transform(
-        "import hbs from 'htmlbars-inline-precompile';\nvar compiled = hbs`hello`;"
-      );
-
-      expect(transpiled).toMatchInlineSnapshot(`
-        "import _ember from \\"ember\\";
-
-        var compiled = _ember.HTMLBars.template(
-        /*
-          hello
-        */
-        \\"precompiled(hello)\\");"
-      `);
-    });
-
-    it('Uses existing Ember import if one exists', function () {
-      plugins = [
-        [
-          HTMLBarsInlinePrecompile,
-          {
-            precompile() {
-              return precompile.apply(this, arguments);
-            },
-
-            useEmberModule: true,
-          },
-        ],
-      ];
-
-      let transpiled = transform(
-        "import Foo from 'ember';\nimport hbs from 'htmlbars-inline-precompile';\nvar compiled = hbs`hello`;"
-      );
-
-      expect(transpiled).toMatchInlineSnapshot(`
-        "import Foo from 'ember';
-        var compiled = Foo.HTMLBars.template(
-        /*
-          hello
-        */
-        \\"precompiled(hello)\\");"
-      `);
     });
   });
 
@@ -693,379 +735,6 @@ describe('htmlbars-inline-precompile', function () {
         );
       }).toThrow(
         /Scope objects for `precompileTemplate` may only contain direct references to in-scope values, e.g. { bar } or { bar: bar }/
-      );
-    });
-  });
-
-  describe('with useTemplateLiteralProposalSemantics', function () {
-    beforeEach(() => {
-      plugins = [
-        [
-          HTMLBarsInlinePrecompile,
-          {
-            precompile() {
-              return precompile.apply(this, arguments);
-            },
-
-            modules: {
-              'ember-template-imports': {
-                export: 'hbs',
-                useTemplateLiteralProposalSemantics: 1,
-              },
-            },
-          },
-        ],
-        '@babel/plugin-proposal-class-properties',
-      ];
-    });
-
-    it('works with templates assigned to variables', function () {
-      let transpiled = transform(
-        `
-          import { hbs } from 'ember-template-imports';
-
-          const Foo = hbs\`hello\`;
-        `
-      );
-
-      expect(transpiled).toMatchInlineSnapshot(`
-        "import { templateOnly as _templateOnly } from \\"@ember/component/template-only\\";
-        import { setComponentTemplate as _setComponentTemplate } from \\"@ember/component\\";
-
-        const Foo = _templateOnly(\\"foo-bar\\", \\"Foo\\");
-
-        _setComponentTemplate(Ember.HTMLBars.template(
-        /*
-          hello
-        */
-        \\"precompiled(hello)\\"), Foo);"
-      `);
-    });
-
-    it('works with templates exported as the default', function () {
-      let transpiled = transform(
-        `
-          import { hbs } from 'ember-template-imports';
-
-          export default hbs\`hello\`;
-        `
-      );
-
-      expect(transpiled).toMatchInlineSnapshot(`
-        "import { setComponentTemplate as _setComponentTemplate } from \\"@ember/component\\";
-        import { templateOnly as _templateOnly } from \\"@ember/component/template-only\\";
-
-        const _fooBar = _templateOnly(\\"foo-bar\\", \\"_fooBar\\");
-
-        _setComponentTemplate(Ember.HTMLBars.template(
-        /*
-          hello
-        */
-        \\"precompiled(hello)\\"), _fooBar);
-
-        export default _fooBar;"
-      `);
-    });
-
-    it('works with templates assigned to classes', function () {
-      let transpiled = transform(
-        `
-          import { hbs } from 'ember-template-imports';
-
-          class Foo {
-            static template = hbs\`hello\`;
-          }
-        `
-      );
-
-      expect(transpiled).toMatchInlineSnapshot(`
-        "import { setComponentTemplate as _setComponentTemplate } from \\"@ember/component\\";
-
-        class Foo {}
-
-        _setComponentTemplate(Ember.HTMLBars.template(
-        /*
-          hello
-        */
-        \\"precompiled(hello)\\"), Foo);"
-      `);
-    });
-
-    it('works with templates assigned to class expressions', function () {
-      let transpiled = transform(
-        `
-          import { hbs } from 'ember-template-imports';
-
-          const Foo = class {
-            static template = hbs\`hello\`;
-          }
-        `
-      );
-
-      expect(transpiled).toMatchInlineSnapshot(`
-        "import { setComponentTemplate as _setComponentTemplate } from \\"@ember/component\\";
-
-        const Foo = _setComponentTemplate(Ember.HTMLBars.template(
-        /*
-          hello
-        */
-        \\"precompiled(hello)\\"), class {});"
-      `);
-    });
-
-    it('correctly handles scope', function () {
-      let source = 'hello';
-      transform(
-        `
-          import { hbs } from 'ember-template-imports';
-          import baz from 'qux';
-
-          let foo = 123;
-          const bar = 456;
-
-          export default hbs\`${source}\`;
-        `
-      );
-
-      expect(optionsReceived).toEqual({
-        contents: source,
-        isProduction: undefined,
-        scope: ['baz', 'foo', 'bar'],
-        strict: true,
-      });
-    });
-
-    it('errors if used in an incorrect positions', function () {
-      expect(() => {
-        transform("import { hbs } from 'ember-template-imports';\nhbs`hello`;");
-      }).toThrow(
-        /Attempted to use `hbs` to define a template in an unsupported way. Templates defined using this helper must be:/
-      );
-
-      expect(() => {
-        transform("import { hbs } from 'ember-template-imports';\nfunc(hbs`hello`);");
-      }).toThrow(
-        /Attempted to use `hbs` to define a template in an unsupported way. Templates defined using this helper must be:/
-      );
-    });
-
-    it('errors if passed incorrect useTemplateLiteralProposalSemantics version', function () {
-      plugins[0][1].modules['ember-template-imports'].useTemplateLiteralProposalSemantics = true;
-
-      expect(() => {
-        transform(
-          `
-            import { hbs } from 'ember-template-imports';
-
-            const Foo = hbs\`hello\`;
-          `
-        );
-      }).toThrow(
-        /Passed an invalid version for useTemplateLiteralProposalSemantics. This option must be assign a version number. The current valid version numbers are: 1/
-      );
-    });
-  });
-
-  describe('with useTemplateTagProposalSemantics', function () {
-    beforeEach(() => {
-      plugins = [
-        [
-          HTMLBarsInlinePrecompile,
-          {
-            precompile() {
-              return precompile.apply(this, arguments);
-            },
-
-            modules: {
-              'ember-template-imports': {
-                export: 'GLIMMER_TEMPLATE',
-                debugName: '<template>',
-                useTemplateTagProposalSemantics: 1,
-              },
-            },
-          },
-        ],
-        '@babel/plugin-proposal-class-properties',
-      ];
-    });
-
-    it('works with templates assigned to variables', function () {
-      let transpiled = transform(
-        `
-          const Foo = [GLIMMER_TEMPLATE(\`hello\`)];
-        `
-      );
-
-      expect(transpiled).toMatchInlineSnapshot(`
-        "import { templateOnly as _templateOnly } from \\"@ember/component/template-only\\";
-        import { setComponentTemplate as _setComponentTemplate } from \\"@ember/component\\";
-
-        const Foo = _templateOnly(\\"foo-bar\\", \\"Foo\\");
-
-        _setComponentTemplate(Ember.HTMLBars.template(
-        /*
-          hello
-        */
-        \\"precompiled(hello)\\"), Foo);"
-      `);
-    });
-
-    it('works with templates exported as variables', function () {
-      let transpiled = transform(
-        `
-          export const Foo = [GLIMMER_TEMPLATE(\`hello\`)];
-        `
-      );
-
-      expect(transpiled).toMatchInlineSnapshot(`
-        "import { templateOnly as _templateOnly } from \\"@ember/component/template-only\\";
-        import { setComponentTemplate as _setComponentTemplate } from \\"@ember/component\\";
-        export const Foo = _templateOnly(\\"foo-bar\\", \\"Foo\\");
-
-        _setComponentTemplate(Ember.HTMLBars.template(
-        /*
-          hello
-        */
-        \\"precompiled(hello)\\"), Foo);"
-      `);
-    });
-
-    it('works with templates exported as the default', function () {
-      let transpiled = transform(
-        `
-          export default [GLIMMER_TEMPLATE(\`hello\`)];
-        `
-      );
-
-      expect(transpiled).toMatchInlineSnapshot(`
-        "import { setComponentTemplate as _setComponentTemplate } from \\"@ember/component\\";
-        import { templateOnly as _templateOnly } from \\"@ember/component/template-only\\";
-
-        const _fooBar = _templateOnly(\\"foo-bar\\", \\"_fooBar\\");
-
-        _setComponentTemplate(Ember.HTMLBars.template(
-        /*
-          hello
-        */
-        \\"precompiled(hello)\\"), _fooBar);
-
-        export default _fooBar;"
-      `);
-    });
-
-    it('works with templates defined at the top level', function () {
-      let transpiled = transform(
-        `
-          [GLIMMER_TEMPLATE(\`hello\`)];
-        `
-      );
-
-      expect(transpiled).toMatchInlineSnapshot(`
-        "import { setComponentTemplate as _setComponentTemplate } from \\"@ember/component\\";
-        import { templateOnly as _templateOnly } from \\"@ember/component/template-only\\";
-
-        const _fooBar = _templateOnly(\\"foo-bar\\", \\"_fooBar\\");
-
-        _setComponentTemplate(Ember.HTMLBars.template(
-        /*
-          hello
-        */
-        \\"precompiled(hello)\\"), _fooBar);
-
-        export default _fooBar;"
-      `);
-    });
-
-    it('works with templates assigned to classes', function () {
-      let transpiled = transform(
-        `
-          class Foo {
-            [GLIMMER_TEMPLATE(\`hello\`)];
-          }
-        `
-      );
-
-      expect(transpiled).toMatchInlineSnapshot(`
-        "import { setComponentTemplate as _setComponentTemplate } from \\"@ember/component\\";
-
-        class Foo {}
-
-        _setComponentTemplate(Ember.HTMLBars.template(
-        /*
-          hello
-        */
-        \\"precompiled(hello)\\"), Foo);"
-      `);
-    });
-
-    it('works with templates assigned to class expressions', function () {
-      let transpiled = transform(
-        `
-          const Foo = class {
-            [GLIMMER_TEMPLATE(\`hello\`)];
-          }
-        `
-      );
-
-      expect(transpiled).toMatchInlineSnapshot(`
-        "import { setComponentTemplate as _setComponentTemplate } from \\"@ember/component\\";
-
-        const Foo = _setComponentTemplate(Ember.HTMLBars.template(
-        /*
-          hello
-        */
-        \\"precompiled(hello)\\"), class {});"
-      `);
-    });
-
-    it('correctly handles scope', function () {
-      let source = 'hello';
-      transform(
-        `
-          import baz from 'qux';
-
-          let foo = 123;
-          const bar = 456;
-
-          export default [GLIMMER_TEMPLATE(\`${source}\`)];
-        `
-      );
-
-      expect(optionsReceived).toEqual({
-        contents: source,
-        isProduction: undefined,
-        scope: ['baz', 'foo', 'bar'],
-        strict: true,
-      });
-    });
-
-    it('errors if used in an incorrect positions', function () {
-      expect(() => {
-        transform("func([GLIMMER_TEMPLATE('hello')]);");
-      }).toThrow(
-        /Attempted to use `<template>` to define a template in an unsupported way. Templates defined using this syntax must be:/
-      );
-    });
-
-    it('errors if used with template literal syntax', function () {
-      plugins[0][1].modules['ember-template-imports'].useTemplateLiteralProposalSemantics = 1;
-
-      expect(() => {
-        transform("func([GLIMMER_TEMPLATE('hello')]);");
-      }).toThrow(/Cannot use both the template literal and template tag syntax proposals together/);
-    });
-
-    it('errors if passed incorrect useTemplateTagProposalSemantics version', function () {
-      plugins[0][1].modules['ember-template-imports'].useTemplateTagProposalSemantics = true;
-
-      expect(() => {
-        transform(
-          `
-            const Foo = [GLIMMER_TEMPLATE(\`hello\`)];
-          `
-        );
-      }).toThrow(
-        /Passed an invalid version for useTemplateTagProposalSemantics. This option must be assign a version number. The current valid version numbers are: 1/
       );
     });
   });
