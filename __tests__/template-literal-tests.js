@@ -240,6 +240,42 @@ describe('htmlbars-inline-precompile: useTemplateLiteralProposalSemantics', func
     );
   });
 
+  it('works with glimmer modules', function () {
+    plugins[0][1].moduleOverrides = {
+      '@ember/component/template-only': {
+        default: ['templateOnlyComponent', '@glimmer/core'],
+      },
+      '@ember/template-factory': {
+        createTemplateFactory: ['createTemplateFactory', '@glimmer/core'],
+      },
+      '@ember/component': {
+        setComponentTemplate: ['setComponentTemplate', '@glimmer/core'],
+      },
+    };
+
+    let transpiled = transform(
+      `
+        import { hbs } from 'ember-template-imports';
+
+        const Foo = hbs\`hello\`;
+      `
+    );
+
+    expect(transpiled).toMatchInlineSnapshot(`
+      "import { templateOnlyComponent as _templateOnlyComponent } from \\"@glimmer/core\\";
+      import { setComponentTemplate as _setComponentTemplate } from \\"@glimmer/core\\";
+      import { createTemplateFactory as _createTemplateFactory } from \\"@glimmer/core\\";
+
+      const Foo = _templateOnlyComponent(\\"foo-bar\\", \\"Foo\\");
+
+      _setComponentTemplate(_createTemplateFactory(
+      /*
+        hello
+      */
+      \\"precompiled(hello)\\"), Foo);"
+    `);
+  });
+
   describe('with babel-plugin-ember-modules-api-polyfill', function () {
     beforeEach(() => {
       plugins.push('babel-plugin-ember-modules-api-polyfill');
