@@ -1,3 +1,14 @@
+## v4.4.0 (2021-02-23)
+
+#### :rocket: Enhancement
+* [#339](https://github.com/ember-cli/babel-plugin-htmlbars-inline-precompile/pull/339)  Add `moduleOverrides` options  ([@pzuraq](https://github.com/pzuraq))
+* [#338](https://github.com/ember-cli/babel-plugin-htmlbars-inline-precompile/pull/338) Refactor to use `createTemplateFactory` ([@pzuraq](https://github.com/pzuraq))
+* [#336](https://github.com/ember-cli/babel-plugin-htmlbars-inline-precompile/pull/336) Implements an option to support the template tag imports proposal ([@pzuraq](https://github.com/pzuraq))
+
+#### Committers: 1
+- Chris Garrett ([@pzuraq](https://github.com/pzuraq))
+
+
 ## v4.3.0 (2021-02-22)
 
 #### :rocket: Enhancement
