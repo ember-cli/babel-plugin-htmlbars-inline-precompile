@@ -791,6 +791,28 @@ describe('htmlbars-inline-precompile', function () {
       `);
     });
 
+    it('works with templates assigned to class expressions', function () {
+      let transpiled = transform(
+        `
+          import { hbs } from 'ember-template-imports';
+
+          const Foo = class {
+            static template = hbs\`hello\`;
+          }
+        `
+      );
+
+      expect(transpiled).toMatchInlineSnapshot(`
+        "import { setComponentTemplate as _setComponentTemplate } from \\"@ember/component\\";
+
+        const Foo = _setComponentTemplate(Ember.HTMLBars.template(
+        /*
+          hello
+        */
+        \\"precompiled(hello)\\"), class {});"
+      `);
+    });
+
     it('correctly handles scope', function () {
       let source = 'hello';
       transform(
@@ -825,14 +847,6 @@ describe('htmlbars-inline-precompile', function () {
       }).toThrow(
         /Attempted to use `hbs` to define a template in an unsupported way. Templates defined using this helper must be:/
       );
-
-      expect(() => {
-        transform(
-          "import { hbs } from 'ember-template-imports';\n let Foo = class { static template = hbs`hello`; }"
-        );
-      }).toThrow(
-        /Attempted to use `hbs` to define a template in an unsupported way. Templates defined using this helper must be:/
-      );
     });
 
     it('errors if passed incorrect useTemplateLiteralProposalSemantics version', function () {
@@ -848,6 +862,210 @@ describe('htmlbars-inline-precompile', function () {
         );
       }).toThrow(
         /Passed an invalid version for useTemplateLiteralProposalSemantics. This option must be assign a version number. The current valid version numbers are: 1/
+      );
+    });
+  });
+
+  describe('with useTemplateTagProposalSemantics', function () {
+    beforeEach(() => {
+      plugins = [
+        [
+          HTMLBarsInlinePrecompile,
+          {
+            precompile() {
+              return precompile.apply(this, arguments);
+            },
+
+            modules: {
+              'ember-template-imports': {
+                export: 'GLIMMER_TEMPLATE',
+                debugName: '<template>',
+                useTemplateTagProposalSemantics: 1,
+              },
+            },
+          },
+        ],
+        '@babel/plugin-proposal-class-properties',
+      ];
+    });
+
+    it('works with templates assigned to variables', function () {
+      let transpiled = transform(
+        `
+          const Foo = [GLIMMER_TEMPLATE(\`hello\`)];
+        `
+      );
+
+      expect(transpiled).toMatchInlineSnapshot(`
+        "import { templateOnly as _templateOnly } from \\"@ember/component/template-only\\";
+        import { setComponentTemplate as _setComponentTemplate } from \\"@ember/component\\";
+
+        const Foo = _templateOnly(\\"foo-bar\\", \\"Foo\\");
+
+        _setComponentTemplate(Ember.HTMLBars.template(
+        /*
+          hello
+        */
+        \\"precompiled(hello)\\"), Foo);"
+      `);
+    });
+
+    it('works with templates exported as variables', function () {
+      let transpiled = transform(
+        `
+          export const Foo = [GLIMMER_TEMPLATE(\`hello\`)];
+        `
+      );
+
+      expect(transpiled).toMatchInlineSnapshot(`
+        "import { templateOnly as _templateOnly } from \\"@ember/component/template-only\\";
+        import { setComponentTemplate as _setComponentTemplate } from \\"@ember/component\\";
+        export const Foo = _templateOnly(\\"foo-bar\\", \\"Foo\\");
+
+        _setComponentTemplate(Ember.HTMLBars.template(
+        /*
+          hello
+        */
+        \\"precompiled(hello)\\"), Foo);"
+      `);
+    });
+
+    it('works with templates exported as the default', function () {
+      let transpiled = transform(
+        `
+          export default [GLIMMER_TEMPLATE(\`hello\`)];
+        `
+      );
+
+      expect(transpiled).toMatchInlineSnapshot(`
+        "import { setComponentTemplate as _setComponentTemplate } from \\"@ember/component\\";
+        import { templateOnly as _templateOnly } from \\"@ember/component/template-only\\";
+
+        const _fooBar = _templateOnly(\\"foo-bar\\", \\"_fooBar\\");
+
+        _setComponentTemplate(Ember.HTMLBars.template(
+        /*
+          hello
+        */
+        \\"precompiled(hello)\\"), _fooBar);
+
+        export default _fooBar;"
+      `);
+    });
+
+    it('works with templates defined at the top level', function () {
+      let transpiled = transform(
+        `
+          [GLIMMER_TEMPLATE(\`hello\`)];
+        `
+      );
+
+      expect(transpiled).toMatchInlineSnapshot(`
+        "import { setComponentTemplate as _setComponentTemplate } from \\"@ember/component\\";
+        import { templateOnly as _templateOnly } from \\"@ember/component/template-only\\";
+
+        const _fooBar = _templateOnly(\\"foo-bar\\", \\"_fooBar\\");
+
+        _setComponentTemplate(Ember.HTMLBars.template(
+        /*
+          hello
+        */
+        \\"precompiled(hello)\\"), _fooBar);
+
+        export default _fooBar;"
+      `);
+    });
+
+    it('works with templates assigned to classes', function () {
+      let transpiled = transform(
+        `
+          class Foo {
+            [GLIMMER_TEMPLATE(\`hello\`)];
+          }
+        `
+      );
+
+      expect(transpiled).toMatchInlineSnapshot(`
+        "import { setComponentTemplate as _setComponentTemplate } from \\"@ember/component\\";
+
+        class Foo {}
+
+        _setComponentTemplate(Ember.HTMLBars.template(
+        /*
+          hello
+        */
+        \\"precompiled(hello)\\"), Foo);"
+      `);
+    });
+
+    it('works with templates assigned to class expressions', function () {
+      let transpiled = transform(
+        `
+          const Foo = class {
+            [GLIMMER_TEMPLATE(\`hello\`)];
+          }
+        `
+      );
+
+      expect(transpiled).toMatchInlineSnapshot(`
+        "import { setComponentTemplate as _setComponentTemplate } from \\"@ember/component\\";
+
+        const Foo = _setComponentTemplate(Ember.HTMLBars.template(
+        /*
+          hello
+        */
+        \\"precompiled(hello)\\"), class {});"
+      `);
+    });
+
+    it('correctly handles scope', function () {
+      let source = 'hello';
+      transform(
+        `
+          import baz from 'qux';
+
+          let foo = 123;
+          const bar = 456;
+
+          export default [GLIMMER_TEMPLATE(\`${source}\`)];
+        `
+      );
+
+      expect(optionsReceived).toEqual({
+        contents: source,
+        isProduction: undefined,
+        scope: ['baz', 'foo', 'bar'],
+        strict: true,
+      });
+    });
+
+    it('errors if used in an incorrect positions', function () {
+      expect(() => {
+        transform("func([GLIMMER_TEMPLATE('hello')]);");
+      }).toThrow(
+        /Attempted to use `<template>` to define a template in an unsupported way. Templates defined using this syntax must be:/
+      );
+    });
+
+    it('errors if used with template literal syntax', function () {
+      plugins[0][1].modules['ember-template-imports'].useTemplateLiteralProposalSemantics = 1;
+
+      expect(() => {
+        transform("func([GLIMMER_TEMPLATE('hello')]);");
+      }).toThrow(/Cannot use both the template literal and template tag syntax proposals together/);
+    });
+
+    it('errors if passed incorrect useTemplateTagProposalSemantics version', function () {
+      plugins[0][1].modules['ember-template-imports'].useTemplateTagProposalSemantics = true;
+
+      expect(() => {
+        transform(
+          `
+            const Foo = [GLIMMER_TEMPLATE(\`hello\`)];
+          `
+        );
+      }).toThrow(
+        /Passed an invalid version for useTemplateTagProposalSemantics. This option must be assign a version number. The current valid version numbers are: 1/
       );
     });
   });
