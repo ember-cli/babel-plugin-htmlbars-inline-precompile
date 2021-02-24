@@ -31,6 +31,8 @@ describe('htmlbars-inline-precompile: useTemplateLiteralProposalSemantics', func
             return precompile.apply(this, arguments);
           },
 
+          ensureModuleApiPolyfill: false,
+
           modules: {
             'ember-template-imports': {
               export: 'hbs',

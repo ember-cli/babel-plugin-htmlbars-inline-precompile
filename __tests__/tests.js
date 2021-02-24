@@ -35,6 +35,8 @@ describe('htmlbars-inline-precompile', function () {
           precompile() {
             return precompile.apply(this, arguments);
           },
+
+          ensureModuleApiPolyfill: false,
         },
       ],
     ];
@@ -82,6 +84,7 @@ describe('htmlbars-inline-precompile', function () {
             return precompile.apply(this, arguments);
           },
 
+          ensureModuleApiPolyfill: false,
           isProduction: true,
           scope: null,
         },
@@ -133,6 +136,7 @@ describe('htmlbars-inline-precompile', function () {
             return precompile.apply(this, arguments);
           },
 
+          ensureModuleApiPolyfill: false,
           isProduction: true,
         },
       ],
@@ -404,6 +408,8 @@ describe('htmlbars-inline-precompile', function () {
             return precompile.apply(this, arguments);
           },
 
+          ensureModuleApiPolyfill: false,
+
           modules: {
             'ember-cli-htmlbars': 'hbs',
             '@ember/template-compilation': {
@@ -447,6 +453,8 @@ describe('htmlbars-inline-precompile', function () {
             return precompile.apply(this, arguments);
           },
 
+          ensureModuleApiPolyfill: false,
+
           modules: {
             '@ember/template-compilation': {
               export: 'precompileTemplate',
@@ -475,6 +483,8 @@ describe('htmlbars-inline-precompile', function () {
           precompile() {
             return precompile.apply(this, arguments);
           },
+
+          ensureModuleApiPolyfill: false,
 
           modules: {
             'ember-template-imports': {
@@ -736,6 +746,8 @@ describe('htmlbars-inline-precompile', function () {
             precompile() {
               return precompile.apply(this, arguments);
             },
+
+            ensureModuleApiPolyfill: false,
 
             modules: {
               '@ember/template-compilation': {
