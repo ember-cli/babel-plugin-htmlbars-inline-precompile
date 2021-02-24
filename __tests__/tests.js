@@ -683,6 +683,28 @@ describe('htmlbars-inline-precompile', function () {
         });"
       `);
     });
+
+    it('works with ensureModuleApiPolyfill', function () {
+      plugins[0][1].ensureModuleApiPolyfill = true;
+
+      precompile = (template) => {
+        return `function() { return "${template}"; }`;
+      };
+
+      let transpiled = transform(
+        "import hbs from 'htmlbars-inline-precompile';\nvar compiled = hbs`hello`;"
+      );
+
+      expect(transpiled).toMatchInlineSnapshot(`
+        "var compiled = Ember.HTMLBars.template(
+        /*
+          hello
+        */
+        function () {
+          return \\"hello\\";
+        });"
+      `);
+    });
   });
 
   describe('with ember-source', function () {
