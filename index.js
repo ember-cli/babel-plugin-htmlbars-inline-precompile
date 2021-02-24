@@ -376,14 +376,14 @@ module.exports = function (babel) {
 
       let { precompile, isProduction } = state.opts;
       let scope = shouldUseAutomaticScope(options) ? getScope(path.scope) : null;
-      let strict = shouldUseStrictMode(options);
+      let strictMode = shouldUseStrictMode(options);
 
       let emberIdentifier = state.ensureImport('createTemplateFactory', '@ember/template-factory');
 
       replacePath(
         path,
         state,
-        compileTemplate(precompile, template, emberIdentifier, { isProduction, scope, strict }),
+        compileTemplate(precompile, template, emberIdentifier, { isProduction, scope, strictMode }),
         options
       );
     },
@@ -473,7 +473,7 @@ module.exports = function (babel) {
       if (shouldUseStrictMode(options)) {
         // If using the transform semantics, then users are not expected to pass
         // options, so we override any existing strict option
-        compilerOptions.strict = true;
+        compilerOptions.strictMode = true;
       }
 
       replacePath(
