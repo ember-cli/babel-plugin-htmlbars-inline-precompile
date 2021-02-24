@@ -1,3 +1,12 @@
+## v4.4.1 (2021-02-24)
+
+#### :bug: Bug Fix
+* [#346](https://github.com/ember-cli/babel-plugin-htmlbars-inline-precompile/pull/346) Ensure proposal syntaxes work with Ember module API polyfill ([@pzuraq](https://github.com/pzuraq))
+
+#### Committers: 1
+- Chris Garrett ([@pzuraq](https://github.com/pzuraq))
+
+
 ## v4.4.0 (2021-02-23)
 
 #### :rocket: Enhancement
