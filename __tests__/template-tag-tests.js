@@ -2,6 +2,7 @@
 
 const babel = require('@babel/core');
 const HTMLBarsInlinePrecompile = require('../index');
+const TransformModules = require('@babel/plugin-transform-modules-amd');
 
 describe('htmlbars-inline-precompile: useTemplateTagProposalSemantics', function () {
   let precompile, plugins, optionsReceived;
@@ -501,6 +502,40 @@ describe('htmlbars-inline-precompile: useTemplateTagProposalSemantics', function
           hello
         */
         \\"precompiled(hello)\\"), class {});"
+      `);
+    });
+
+    it('works when used alongside modules transform', function () {
+      plugins[0][1].ensureModuleApiPolyfill = true;
+      plugins.push([TransformModules]);
+
+      let transpiled = transform(
+        `
+          const Foo = [GLIMMER_TEMPLATE(\`hello\`)];
+          const Bar = [GLIMMER_TEMPLATE(\`hello\`)];
+        `
+      );
+
+      expect(transpiled).toMatchInlineSnapshot(`
+        "define([], function () {
+          \\"use strict\\";
+
+          const Foo = Ember._templateOnlyComponent(\\"foo-bar\\", \\"Foo\\");
+
+          Ember._setComponentTemplate(Ember.HTMLBars.template(
+          /*
+            hello
+          */
+          \\"precompiled(hello)\\"), Foo);
+
+          const Bar = Ember._templateOnlyComponent(\\"foo-bar\\", \\"Bar\\");
+
+          Ember._setComponentTemplate(Ember.HTMLBars.template(
+          /*
+            hello
+          */
+          \\"precompiled(hello)\\"), Bar);
+        });"
       `);
     });
   });

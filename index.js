@@ -2,6 +2,7 @@
 const { replaceTemplateLiteralProposal } = require('./src/template-literal-transform');
 const { replaceTemplateTagProposal } = require('./src/template-tag-transform');
 const { registerRefs } = require('./src/util');
+const { setupState, processImportDeclaration } = require('babel-plugin-ember-modules-api-polyfill');
 
 module.exports = function (babel) {
   let t = babel.types;
@@ -144,22 +145,49 @@ module.exports = function (babel) {
         return newPath.node ? [newPath.get('callee')] : [];
       });
     }
+
+    if (state.opts.ensureModuleApiPolyfill) {
+      processModuleApiPolyfill(state);
+    }
+  }
+
+  let allAddedImports = Object.create(null);
+
+  function processModuleApiPolyfill(state) {
+    for (let module in allAddedImports) {
+      let addedImports = allAddedImports[module];
+
+      for (let addedImport in addedImports) {
+        let { path } = addedImports[addedImport];
+
+        if (path && path.node) {
+          processImportDeclaration(t, path, state);
+
+          if (path.removed) {
+            delete addedImports[addedImport];
+          }
+        }
+      }
+    }
   }
 
   let visitor = {
     Program(path, state) {
+      if (state.opts.ensureModuleApiPolyfill) {
+        // Setup state for the module API polyfill
+        setupState(t, path, state);
+      }
+
       let options = state.opts || {};
 
       // Find/setup Ember global identifier
       let useEmberModule = Boolean(options.useEmberModule);
       let moduleOverrides = options.moduleOverrides;
 
-      let allAddedImports = {};
-
       state.ensureImport = (exportName, moduleName) => {
         let addedImports = (allAddedImports[moduleName] = allAddedImports[moduleName] || {});
 
-        if (addedImports[exportName]) return addedImports[exportName];
+        if (addedImports[exportName]) return addedImports[exportName].id;
 
         if (moduleOverrides) {
           let glimmerModule = moduleOverrides[moduleName];
@@ -172,8 +200,8 @@ module.exports = function (babel) {
         }
 
         if (exportName === 'default' && moduleName === 'ember' && !useEmberModule) {
-          addedImports[exportName] = t.identifier('Ember');
-          return addedImports[exportName];
+          addedImports[exportName] = { id: t.identifier('Ember') };
+          return addedImports[exportName].id;
         }
 
         let importDeclarations = path.get('body').filter((n) => n.type === 'ImportDeclaration');
@@ -190,7 +218,7 @@ module.exports = function (babel) {
           });
 
           if (importSpecifier) {
-            addedImports[exportName] = importSpecifier.node.local;
+            addedImports[exportName] = [importSpecifier.node.local];
           }
         }
 
@@ -198,7 +226,6 @@ module.exports = function (babel) {
           let uid = path.scope.generateUidIdentifier(
             exportName === 'default' ? moduleName : exportName
           );
-          addedImports[exportName] = uid;
 
           let newImportSpecifier =
             exportName === 'default'
@@ -208,9 +235,14 @@ module.exports = function (babel) {
           let newImport = t.importDeclaration([newImportSpecifier], t.stringLiteral(moduleName));
           path.unshiftContainer('body', newImport);
           path.scope.registerBinding('module', path.get('body.0.specifiers.0'));
+
+          addedImports[exportName] = {
+            id: uid,
+            path: path.get('body.0'),
+          };
         }
 
-        return addedImports[exportName];
+        return addedImports[exportName].id;
       };
 
       // Setup other module options and create cache for values
