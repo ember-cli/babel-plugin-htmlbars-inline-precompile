@@ -1,3 +1,12 @@
+## v4.4.3 (2021-02-24)
+
+#### :bug: Bug Fix
+* [#348](https://github.com/ember-cli/babel-plugin-htmlbars-inline-precompile/pull/348) Rename `strict` to `strictMode` ([@pzuraq](https://github.com/pzuraq))
+
+#### Committers: 1
+- Chris Garrett ([@pzuraq](https://github.com/pzuraq))
+
+
 ## v4.4.2 (2021-02-24)
 
 #### :bug: Bug Fix
