@@ -148,7 +148,7 @@ describe('htmlbars-inline-precompile', function () {
       contents: source,
       isProduction: true,
       scope: null,
-      strict: false,
+      strictMode: false,
     });
   });
 
@@ -263,7 +263,7 @@ describe('htmlbars-inline-precompile', function () {
       contents: source,
       isProduction: undefined,
       scope: null,
-      strict: false,
+      strictMode: false,
     });
   });
 

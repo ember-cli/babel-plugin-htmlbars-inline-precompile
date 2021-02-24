@@ -242,7 +242,7 @@ describe('htmlbars-inline-precompile: useTemplateTagProposalSemantics', function
       contents: source,
       isProduction: undefined,
       scope: ['baz', 'foo', 'bar'],
-      strict: true,
+      strictMode: true,
     });
   });
 

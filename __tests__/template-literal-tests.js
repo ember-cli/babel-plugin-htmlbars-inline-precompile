@@ -209,7 +209,7 @@ describe('htmlbars-inline-precompile: useTemplateLiteralProposalSemantics', func
       contents: source,
       isProduction: undefined,
       scope: ['baz', 'foo', 'bar'],
-      strict: true,
+      strictMode: true,
     });
   });
 
