@@ -31,6 +31,8 @@ describe('htmlbars-inline-precompile: useTemplateTagProposalSemantics', function
             return precompile.apply(this, arguments);
           },
 
+          ensureModuleApiPolyfill: false,
+
           modules: {
             'TEMPLATE-TAG-MODULE': {
               export: 'GLIMMER_TEMPLATE',

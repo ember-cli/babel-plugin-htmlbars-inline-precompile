@@ -173,6 +173,9 @@ module.exports = function (babel) {
 
   let visitor = {
     Program(path, state) {
+      state.ensureModuleApiPolyfill =
+        'ensureModuleApiPolyfill' in state.opts ? state.opts.ensureModuleApiPolyfill : true;
+
       if (state.opts.ensureModuleApiPolyfill) {
         // Setup state for the module API polyfill
         setupState(t, path, state);
