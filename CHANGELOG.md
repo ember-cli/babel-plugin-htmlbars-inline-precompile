@@ -1,3 +1,12 @@
+## v4.4.4 (2021-02-25)
+
+#### :bug: Bug Fix
+* [#349](https://github.com/ember-cli/babel-plugin-htmlbars-inline-precompile/pull/349) Fix defaulting of `ensureModuleApiPolyfill` to true ([@jamescdavis](https://github.com/jamescdavis))
+
+#### Committers: 1
+- James C. Davis ([@jamescdavis](https://github.com/jamescdavis))
+
+
 ## v4.4.3 (2021-02-24)
 
 #### :bug: Bug Fix
