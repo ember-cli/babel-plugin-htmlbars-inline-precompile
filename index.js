@@ -173,7 +173,7 @@ module.exports = function (babel) {
 
   let visitor = {
     Program(path, state) {
-      state.ensureModuleApiPolyfill =
+      state.opts.ensureModuleApiPolyfill =
         'ensureModuleApiPolyfill' in state.opts ? state.opts.ensureModuleApiPolyfill : true;
 
       if (state.opts.ensureModuleApiPolyfill) {
