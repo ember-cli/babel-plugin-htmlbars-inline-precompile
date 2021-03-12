@@ -64,6 +64,36 @@ describe('htmlbars-inline-precompile', function () {
     `);
   });
 
+  it('does not error when transpiling multiple modules with a single plugin config', function () {
+    let transpiled = transform(
+      "import hbs from 'htmlbars-inline-precompile';\nvar compiled = hbs`hello`;"
+    );
+
+    expect(transpiled).toMatchInlineSnapshot(`
+      "import { createTemplateFactory as _createTemplateFactory } from \\"@ember/template-factory\\";
+
+      var compiled = _createTemplateFactory(
+      /*
+        hello
+      */
+      \\"precompiled(hello)\\");"
+    `);
+
+    transpiled = transform(
+      "import hbs from 'htmlbars-inline-precompile';\nvar compiled = hbs`hello`;"
+    );
+
+    expect(transpiled).toMatchInlineSnapshot(`
+      "import { createTemplateFactory as _createTemplateFactory } from \\"@ember/template-factory\\";
+
+      var compiled = _createTemplateFactory(
+      /*
+        hello
+      */
+      \\"precompiled(hello)\\");"
+    `);
+  });
+
   it('passes options when used as a call expression', function () {
     let source = 'hello';
     transform(`import hbs from 'htmlbars-inline-precompile';\nvar compiled = hbs('${source}');`);
