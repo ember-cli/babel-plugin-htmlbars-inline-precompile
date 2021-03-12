@@ -1,3 +1,12 @@
+## v4.4.5 (2021-03-12)
+
+#### :bug: Bug Fix
+* [#355](https://github.com/ember-cli/babel-plugin-htmlbars-inline-precompile/pull/355) Avoid sharing list of previously added imports. ([@rwjblue](https://github.com/rwjblue))
+
+#### Committers: 1
+- Robert Jackson ([@rwjblue](https://github.com/rwjblue))
+
+
 ## v4.4.4 (2021-02-25)
 
 #### :bug: Bug Fix
