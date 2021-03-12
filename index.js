@@ -151,11 +151,9 @@ module.exports = function (babel) {
     }
   }
 
-  let allAddedImports = Object.create(null);
-
   function processModuleApiPolyfill(state) {
-    for (let module in allAddedImports) {
-      let addedImports = allAddedImports[module];
+    for (let module in state.allAddedImports) {
+      let addedImports = state.allAddedImports[module];
 
       for (let addedImport in addedImports) {
         let { path } = addedImports[addedImport];
@@ -187,8 +185,11 @@ module.exports = function (babel) {
       let useEmberModule = Boolean(options.useEmberModule);
       let moduleOverrides = options.moduleOverrides;
 
+      state.allAddedImports = Object.create(null);
+
       state.ensureImport = (exportName, moduleName) => {
-        let addedImports = (allAddedImports[moduleName] = allAddedImports[moduleName] || {});
+        let addedImports = (state.allAddedImports[moduleName] =
+          state.allAddedImports[moduleName] || {});
 
         if (addedImports[exportName]) return addedImports[exportName].id;
 
