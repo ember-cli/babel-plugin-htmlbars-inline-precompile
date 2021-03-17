@@ -1,3 +1,12 @@
+## v4.4.6 (2021-03-17)
+
+#### :bug: Bug Fix
+* [#357](https://github.com/ember-cli/babel-plugin-htmlbars-inline-precompile/pull/357) [BUGFIX] Use a unique identifier for each reference ([@pzuraq](https://github.com/pzuraq))
+
+#### Committers: 1
+- Chris Garrett ([@pzuraq](https://github.com/pzuraq))
+
+
 ## v4.4.5 (2021-03-12)
 
 #### :bug: Bug Fix
