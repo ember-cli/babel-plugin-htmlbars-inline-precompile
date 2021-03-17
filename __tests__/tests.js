@@ -64,6 +64,24 @@ describe('htmlbars-inline-precompile', function () {
     `);
   });
 
+  it('supports compilation with templateCompilerPath', function () {
+    plugins[0][1].templateCompilerPath = require.resolve('./mock-precompile');
+
+    let transpiled = transform(
+      "import hbs from 'htmlbars-inline-precompile';\nvar compiled = hbs`hello`;"
+    );
+
+    expect(transpiled).toMatchInlineSnapshot(`
+      "import { createTemplateFactory as _createTemplateFactory } from \\"@ember/template-factory\\";
+
+      var compiled = _createTemplateFactory(
+      /*
+        hello
+      */
+      precompiledFromPath(hello));"
+    `);
+  });
+
   it('does not error when transpiling multiple modules with a single plugin config', function () {
     let transpiled = transform(
       "import hbs from 'htmlbars-inline-precompile';\nvar compiled = hbs`hello`;"
@@ -822,7 +840,7 @@ describe('htmlbars-inline-precompile', function () {
 
       expect(optionsReceived).toEqual({
         contents: source,
-        scope: ['foo', 'bar'],
+        locals: ['foo', 'bar'],
       });
     });
 

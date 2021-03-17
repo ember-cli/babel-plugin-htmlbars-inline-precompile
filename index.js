@@ -66,15 +66,11 @@ module.exports = function (babel) {
       let propertyName =
         property.key.type === 'Identifier' ? property.key.name : property.key.value;
 
-      let value;
-
       if (shouldParseScope && propertyName === 'scope') {
-        value = parseScopeObject(buildError, name, property.value);
+        result.locals = parseScopeObject(buildError, name, property.value);
       } else {
-        value = parseExpression(buildError, name, property.value);
+        result[propertyName] = parseExpression(buildError, name, property.value);
       }
-
-      result[propertyName] = value;
     });
 
     return result;
@@ -169,10 +165,20 @@ module.exports = function (babel) {
     }
   }
 
+  let precompile;
+
   let visitor = {
     Program(path, state) {
       state.opts.ensureModuleApiPolyfill =
         'ensureModuleApiPolyfill' in state.opts ? state.opts.ensureModuleApiPolyfill : true;
+
+      if (state.opts.templateCompilerPath) {
+        let templateCompiler = require(state.opts.templateCompilerPath);
+
+        precompile = templateCompiler.precompile;
+      } else {
+        precompile = state.opts.precompile;
+      }
 
       if (state.opts.ensureModuleApiPolyfill) {
         // Setup state for the module API polyfill
@@ -376,7 +382,7 @@ module.exports = function (babel) {
 
       let template = path.node.quasi.quasis.map((quasi) => quasi.value.cooked).join('');
 
-      let { precompile, isProduction } = state.opts;
+      let { isProduction } = state.opts;
       let scope = shouldUseAutomaticScope(options) ? getScope(path.scope) : null;
       let strictMode = shouldUseStrictMode(options);
 
@@ -459,7 +465,7 @@ module.exports = function (babel) {
           );
       }
 
-      let { precompile, isProduction } = state.opts;
+      let { isProduction } = state.opts;
 
       // allow the user specified value to "win" over ours
       if (!('isProduction' in compilerOptions)) {

@@ -9,6 +9,9 @@
     "lint": "eslint --cache .",
     "test": "jest"
   },
+  "jest": {
+    "testPathIgnorePatterns": ["mock-precompile"]
+  },
   "dependencies": {
     "babel-plugin-ember-modules-api-polyfill": "^3.4.0"
   },
