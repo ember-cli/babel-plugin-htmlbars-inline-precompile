@@ -555,6 +555,30 @@ describe('htmlbars-inline-precompile', function () {
     `);
   });
 
+  it('works properly when used along with modules transform multiple times', function () {
+    plugins.push([TransformModules]);
+    let transformed = transform(
+      "import hbs from 'htmlbars-inline-precompile';\nvar compiled = hbs`hello`;\nvar otherCompiled = hbs`hello`;"
+    );
+
+    expect(transformed).toMatchInlineSnapshot(`
+      "define([\\"@ember/template-factory\\"], function (_templateFactory) {
+        \\"use strict\\";
+
+        var compiled = (0, _templateFactory.createTemplateFactory)(
+        /*
+          hello
+        */
+        \\"precompiled(hello)\\");
+        var otherCompiled = (0, _templateFactory.createTemplateFactory)(
+        /*
+          hello
+        */
+        \\"precompiled(hello)\\");
+      });"
+    `);
+  });
+
   it('works properly when used after modules transform', function () {
     plugins.unshift([TransformModules]);
     let transformed = transform(

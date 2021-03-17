@@ -191,7 +191,7 @@ module.exports = function (babel) {
         let addedImports = (state.allAddedImports[moduleName] =
           state.allAddedImports[moduleName] || {});
 
-        if (addedImports[exportName]) return addedImports[exportName].id;
+        if (addedImports[exportName]) return t.identifier(addedImports[exportName].id.name);
 
         if (moduleOverrides) {
           let glimmerModule = moduleOverrides[moduleName];
@@ -205,6 +205,7 @@ module.exports = function (babel) {
 
         if (exportName === 'default' && moduleName === 'ember' && !useEmberModule) {
           addedImports[exportName] = { id: t.identifier('Ember') };
+
           return addedImports[exportName].id;
         }
 
@@ -218,7 +219,7 @@ module.exports = function (babel) {
           let importSpecifier = preexistingImportDeclaration.get('specifiers').find(({ node }) => {
             return exportName === 'default'
               ? t.isImportDefaultSpecifier(node)
-              : node.imported.name === exportName;
+              : node.imported && node.imported.name === exportName;
           });
 
           if (importSpecifier) {
@@ -246,7 +247,7 @@ module.exports = function (babel) {
           };
         }
 
-        return addedImports[exportName].id;
+        return t.identifier(addedImports[exportName].id.name);
       };
 
       // Setup other module options and create cache for values
