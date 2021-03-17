@@ -1,3 +1,15 @@
+## v5.0.0 (2021-03-17)
+
+#### :boom: Breaking Change
+* [#358](https://github.com/ember-cli/babel-plugin-htmlbars-inline-precompile/pull/358) Rename `scope` to `locals` for strict mode transpilation ([@pzuraq](https://github.com/pzuraq))
+
+#### :rocket: Enhancement
+* [#358](https://github.com/ember-cli/babel-plugin-htmlbars-inline-precompile/pull/358) Adds a `templateCompilerPath` option ([@pzuraq](https://github.com/pzuraq))
+
+#### Committers: 1
+- Chris Garrett ([@pzuraq](https://github.com/pzuraq))
+
+
 ## v4.4.6 (2021-03-17)
 
 #### :bug: Bug Fix
