@@ -1,3 +1,5 @@
 coverage
 node_modules
 /.eslintcache
+/dist
+yarn-error.log

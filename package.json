@@ -6,7 +6,10 @@
   "license": "MIT",
   "author": "Clemens Müller <cmueller.418@gmail.com>",
   "scripts": {
-    "lint": "eslint --cache .",
+    "prepare": "tsc",
+    "build": "tsc",
+    "pretest": "tsc",
+    "lint": "tsc && eslint --cache .",
     "test": "jest"
   },
   "jest": {
@@ -14,8 +17,17 @@
       "mock-precompile"
     ]
   },
+  "files": [
+    "index.js",
+    "src/**/*.js",
+    "dist/**/*.js"
+  ],
   "dependencies": {
-    "babel-plugin-ember-modules-api-polyfill": "^3.4.0"
+    "babel-plugin-ember-modules-api-polyfill": "^3.4.0",
+    "line-column": "^1.0.2",
+    "magic-string": "^0.25.7",
+    "parse-static-imports": "^1.1.0",
+    "string.prototype.matchall": "^4.0.4"
   },
   "devDependencies": {
     "@babel/core": "^7.13.10",
@@ -23,6 +35,11 @@
     "@babel/plugin-transform-modules-amd": "^7.13.0",
     "@babel/plugin-transform-template-literals": "^7.13.0",
     "@babel/plugin-transform-unicode-escapes": "^7.12.13",
+    "@glimmer/syntax": "^0.77.5",
+    "@types/line-column": "^1.0.0",
+    "@types/string.prototype.matchall": "^4.0.0",
+    "@typescript-eslint/eslint-plugin": "^4.18.0",
+    "@typescript-eslint/parser": "^4.18.0",
     "common-tags": "^1.8.0",
     "ember-source": "^3.25.3",
     "eslint": "^6.8.0",
@@ -32,7 +49,8 @@
     "jest": "^26.6.3",
     "prettier": "^2.2.1",
     "release-it": "^14.4.1",
-    "release-it-lerna-changelog": "^3.1.0"
+    "release-it-lerna-changelog": "^3.1.0",
+    "typescript": "^4.2.3"
   },
   "engines": {
     "node": "10.* || >= 12.*"
