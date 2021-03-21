@@ -134,7 +134,7 @@ describe('htmlbars-inline-precompile', function () {
 
           ensureModuleApiPolyfill: false,
           isProduction: true,
-          scope: null,
+          locals: null,
         },
       ],
     ];
@@ -195,7 +195,7 @@ describe('htmlbars-inline-precompile', function () {
     expect(optionsReceived).toEqual({
       contents: source,
       isProduction: true,
-      scope: null,
+      locals: null,
       strictMode: false,
     });
   });
@@ -310,7 +310,7 @@ describe('htmlbars-inline-precompile', function () {
     expect(optionsReceived).toEqual({
       contents: source,
       isProduction: undefined,
-      scope: null,
+      locals: null,
       strictMode: false,
     });
   });

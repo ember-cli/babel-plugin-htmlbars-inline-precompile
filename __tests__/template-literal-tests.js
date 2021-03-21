@@ -208,7 +208,7 @@ describe('htmlbars-inline-precompile: useTemplateLiteralProposalSemantics', func
     expect(optionsReceived).toEqual({
       contents: source,
       isProduction: undefined,
-      scope: ['baz', 'foo', 'bar'],
+      locals: ['baz', 'foo', 'bar'],
       strictMode: true,
     });
   });

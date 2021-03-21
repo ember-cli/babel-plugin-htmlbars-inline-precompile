@@ -383,7 +383,7 @@ module.exports = function (babel) {
       let template = path.node.quasi.quasis.map((quasi) => quasi.value.cooked).join('');
 
       let { isProduction } = state.opts;
-      let scope = shouldUseAutomaticScope(options) ? getScope(path.scope) : null;
+      let locals = shouldUseAutomaticScope(options) ? getScope(path.scope) : null;
       let strictMode = shouldUseStrictMode(options);
 
       let emberIdentifier = state.ensureImport('createTemplateFactory', '@ember/template-factory');
@@ -391,7 +391,11 @@ module.exports = function (babel) {
       replacePath(
         path,
         state,
-        compileTemplate(precompile, template, emberIdentifier, { isProduction, scope, strictMode }),
+        compileTemplate(precompile, template, emberIdentifier, {
+          isProduction,
+          locals,
+          strictMode,
+        }),
         options
       );
     },
@@ -475,7 +479,7 @@ module.exports = function (babel) {
       if (shouldUseAutomaticScope(options)) {
         // If using the transform semantics, then users are not expected to pass
         // options, so we override any existing scope
-        compilerOptions.scope = getScope(path.scope);
+        compilerOptions.locals = getScope(path.scope);
       }
 
       if (shouldUseStrictMode(options)) {
