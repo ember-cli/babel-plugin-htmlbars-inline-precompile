@@ -844,6 +844,62 @@ describe('htmlbars-inline-precompile', function () {
       });
     });
 
+    it('correctly handles scope function', function () {
+      let source = 'hello';
+      transform(
+        `import { precompileTemplate } from '@ember/template-compilation';\nvar compiled = precompileTemplate('${source}', { scope: () => ({ foo, bar }) });`
+      );
+
+      expect(optionsReceived).toEqual({
+        contents: source,
+        locals: ['foo', 'bar'],
+      });
+    });
+
+    it('correctly handles scope function (non-block arrow function)', function () {
+      let source = 'hello';
+      transform(
+        `import { precompileTemplate } from '@ember/template-compilation';\nvar compiled = precompileTemplate('${source}', { scope: () => ({ foo, bar }) });`
+      );
+      expect(optionsReceived).toEqual({
+        contents: source,
+        locals: ['foo', 'bar'],
+      });
+    });
+
+    it('correctly handles scope function (block arrow function)', function () {
+      let source = 'hello';
+      transform(
+        `import { precompileTemplate } from '@ember/template-compilation';\nvar compiled = precompileTemplate('${source}', { scope: () => { return { foo, bar }; }});`
+      );
+      expect(optionsReceived).toEqual({
+        contents: source,
+        locals: ['foo', 'bar'],
+      });
+    });
+
+    it('correctly handles scope function (normal function)', function () {
+      let source = 'hello';
+      transform(
+        `import { precompileTemplate } from '@ember/template-compilation';\nvar compiled = precompileTemplate('${source}', { scope: function() { return { foo, bar }; }});`
+      );
+      expect(optionsReceived).toEqual({
+        contents: source,
+        locals: ['foo', 'bar'],
+      });
+    });
+
+    it('correctly handles scope function (object method)', function () {
+      let source = 'hello';
+      transform(
+        `import { precompileTemplate } from '@ember/template-compilation';\nvar compiled = precompileTemplate('${source}', { scope() { return { foo, bar }; }});`
+      );
+      expect(optionsReceived).toEqual({
+        contents: source,
+        locals: ['foo', 'bar'],
+      });
+    });
+
     it('errors if scope contains mismatched keys/values', function () {
       expect(() => {
         transform(

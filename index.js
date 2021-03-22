@@ -11,12 +11,12 @@ module.exports = function (babel) {
     `(function() {\n  throw new Error('ERROR_MESSAGE');\n})();`
   );
 
-  function parseExpression(buildError, name, node) {
+  function parseExpression(state, buildError, name, node) {
     switch (node.type) {
       case 'ObjectExpression':
-        return parseObjectExpression(buildError, name, node);
+        return parseObjectExpression(state, buildError, name, node);
       case 'ArrayExpression': {
-        return parseArrayExpression(buildError, name, node);
+        return parseArrayExpression(state, buildError, name, node);
       }
       case 'StringLiteral':
       case 'BooleanLiteral':
@@ -29,20 +29,50 @@ module.exports = function (babel) {
     }
   }
 
-  function parseArrayExpression(buildError, name, node) {
-    let result = node.elements.map((element) => parseExpression(buildError, name, element));
+  function parseArrayExpression(state, buildError, name, node) {
+    let result = node.elements.map((element) => parseExpression(state, buildError, name, element));
 
     return result;
   }
 
-  function parseScopeObject(buildError, name, node) {
-    if (node.type !== 'ObjectExpression') {
+  function parseScope(state, buildError, name, node) {
+    let body;
+
+    if (node.type === 'ObjectMethod') {
+      body = node.body;
+    } else if (node.value.type === 'ObjectExpression') {
+      console.warn(
+        `Passing an object as the \`scope\` property to inline templates has been deprecated. Please pass a function that returns an object expression instead. Usage in: ${state.file.opts.filename}`
+      );
+
+      body = node.value;
+    } else {
+      body = node.value.body;
+    }
+
+    let objExpression;
+
+    if (body && body.type === 'ObjectExpression') {
+      objExpression = body;
+    } else if (body && body.type === 'BlockStatement') {
+      let returnStatement = body.body[0];
+
+      if (body.body.length !== 1 || returnStatement.type !== 'ReturnStatement') {
+        throw new Error(
+          'Scope functions can only consist of a single return statement which returns an object expression containing references to in-scope values'
+        );
+      }
+
+      objExpression = returnStatement.argument;
+    }
+
+    if (!objExpression || objExpression.type !== 'ObjectExpression') {
       throw buildError(
-        `Scope objects for \`${name}\` must be an object expression containing only references to in-scope values`
+        `Scope objects for \`${name}\` must be an object expression containing only references to in-scope values, or a function that returns an object expression containing only references to in-scope values`
       );
     }
 
-    return node.properties.map((prop) => {
+    return objExpression.properties.map((prop) => {
       let { key, value } = prop;
 
       if (value.type !== 'Identifier' || value.name !== key.name) {
@@ -55,7 +85,7 @@ module.exports = function (babel) {
     });
   }
 
-  function parseObjectExpression(buildError, name, node, shouldParseScope = false) {
+  function parseObjectExpression(state, buildError, name, node, shouldParseScope = false) {
     let result = {};
 
     node.properties.forEach((property) => {
@@ -67,9 +97,9 @@ module.exports = function (babel) {
         property.key.type === 'Identifier' ? property.key.name : property.key.value;
 
       if (shouldParseScope && propertyName === 'scope') {
-        result.locals = parseScopeObject(buildError, name, property.value);
+        result.locals = parseScope(state, buildError, name, property);
       } else {
-        result[propertyName] = parseExpression(buildError, name, property.value);
+        result[propertyName] = parseExpression(state, buildError, name, property.value);
       }
     });
 
@@ -455,6 +485,7 @@ module.exports = function (babel) {
           }
 
           compilerOptions = parseObjectExpression(
+            state,
             path.buildCodeFrameError.bind(path),
             options.originalName,
             args[1],
