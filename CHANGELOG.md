@@ -1,3 +1,15 @@
+## v5.1.0 (2021-03-23)
+
+#### :rocket: Enhancement
+* [#360](https://github.com/ember-cli/babel-plugin-htmlbars-inline-precompile/pull/360) Add ability to parse scope function (allow strict mode templates to be more resilient to module cycles). ([@pzuraq](https://github.com/pzuraq))
+
+#### :bug: Bug Fix
+* [#359](https://github.com/ember-cli/babel-plugin-htmlbars-inline-precompile/pull/359) Ensure locals are used instead of scope everywhere ([@pzuraq](https://github.com/pzuraq))
+
+#### Committers: 1
+- Chris Garrett ([@pzuraq](https://github.com/pzuraq))
+
+
 ## v5.0.0 (2021-03-17)
 
 #### :boom: Breaking Change
