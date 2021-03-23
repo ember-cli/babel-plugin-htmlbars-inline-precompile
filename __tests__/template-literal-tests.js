@@ -59,13 +59,11 @@ describe('htmlbars-inline-precompile: useTemplateLiteralProposalSemantics', func
       import { setComponentTemplate as _setComponentTemplate } from \\"@ember/component\\";
       import { createTemplateFactory as _createTemplateFactory } from \\"@ember/template-factory\\";
 
-      const Foo = _emberComponentTemplateOnly(\\"foo-bar\\", \\"Foo\\");
-
-      _setComponentTemplate(_createTemplateFactory(
+      const Foo = _setComponentTemplate(_createTemplateFactory(
       /*
         hello
       */
-      \\"precompiled(hello)\\"), Foo);"
+      \\"precompiled(hello)\\"), _emberComponentTemplateOnly(\\"foo-bar\\", \\"Foo\\"));"
     `);
   });
 
@@ -79,19 +77,14 @@ describe('htmlbars-inline-precompile: useTemplateLiteralProposalSemantics', func
     );
 
     expect(transpiled).toMatchInlineSnapshot(`
-      "import { setComponentTemplate as _setComponentTemplate } from \\"@ember/component\\";
-      import _emberComponentTemplateOnly from \\"@ember/component/template-only\\";
+      "import _emberComponentTemplateOnly from \\"@ember/component/template-only\\";
+      import { setComponentTemplate as _setComponentTemplate } from \\"@ember/component\\";
       import { createTemplateFactory as _createTemplateFactory } from \\"@ember/template-factory\\";
-
-      const _fooBar = _emberComponentTemplateOnly(\\"foo-bar\\", \\"_fooBar\\");
-
-      _setComponentTemplate(_createTemplateFactory(
+      export default _setComponentTemplate(_createTemplateFactory(
       /*
         hello
       */
-      \\"precompiled(hello)\\"), _fooBar);
-
-      export default _fooBar;"
+      \\"precompiled(hello)\\"), _emberComponentTemplateOnly(\\"foo-bar\\", \\"_fooBar\\"));"
     `);
   });
 
@@ -213,18 +206,35 @@ describe('htmlbars-inline-precompile: useTemplateLiteralProposalSemantics', func
     });
   });
 
-  it('errors if used in an incorrect positions', function () {
-    expect(() => {
-      transform("import { hbs } from 'ember-template-imports';\nhbs`hello`;");
-    }).toThrow(
-      /Attempted to use `hbs` to define a template in an unsupported way. Templates defined using this helper must be:/
-    );
+  it('works if used in an arbitrary expression statement', function () {
+    let transpiled = transform("import { hbs } from 'ember-template-imports';\nhbs`hello`;");
 
-    expect(() => {
-      transform("import { hbs } from 'ember-template-imports';\nfunc(hbs`hello`);");
-    }).toThrow(
-      /Attempted to use `hbs` to define a template in an unsupported way. Templates defined using this helper must be:/
-    );
+    expect(transpiled).toMatchInlineSnapshot(`
+      "import _emberComponentTemplateOnly from \\"@ember/component/template-only\\";
+      import { setComponentTemplate as _setComponentTemplate } from \\"@ember/component\\";
+      import { createTemplateFactory as _createTemplateFactory } from \\"@ember/template-factory\\";
+
+      _setComponentTemplate(_createTemplateFactory(
+      /*
+        hello
+      */
+      \\"precompiled(hello)\\"), _emberComponentTemplateOnly(\\"foo-bar\\", \\"_fooBar\\"));"
+    `);
+  });
+
+  it('works when passed directly to a function', function () {
+    let transpiled = transform("import { hbs } from 'ember-template-imports';\nfunc(hbs`hello`);");
+
+    expect(transpiled).toMatchInlineSnapshot(`
+      "import _emberComponentTemplateOnly from \\"@ember/component/template-only\\";
+      import { setComponentTemplate as _setComponentTemplate } from \\"@ember/component\\";
+      import { createTemplateFactory as _createTemplateFactory } from \\"@ember/template-factory\\";
+      func(_setComponentTemplate(_createTemplateFactory(
+      /*
+        hello
+      */
+      \\"precompiled(hello)\\"), _emberComponentTemplateOnly(\\"foo-bar\\", \\"_fooBar\\")));"
+    `);
   });
 
   it('errors if passed incorrect useTemplateLiteralProposalSemantics version', function () {
@@ -269,13 +279,11 @@ describe('htmlbars-inline-precompile: useTemplateLiteralProposalSemantics', func
       import { setComponentTemplate as _setComponentTemplate } from \\"@glimmer/core\\";
       import { createTemplateFactory as _createTemplateFactory } from \\"@glimmer/core\\";
 
-      const Foo = _templateOnlyComponent(\\"foo-bar\\", \\"Foo\\");
-
-      _setComponentTemplate(_createTemplateFactory(
+      const Foo = _setComponentTemplate(_createTemplateFactory(
       /*
         hello
       */
-      \\"precompiled(hello)\\"), Foo);"
+      \\"precompiled(hello)\\"), _templateOnlyComponent(\\"foo-bar\\", \\"Foo\\"));"
     `);
   });
 
@@ -294,13 +302,11 @@ describe('htmlbars-inline-precompile: useTemplateLiteralProposalSemantics', func
       );
 
       expect(transpiled).toMatchInlineSnapshot(`
-        "const Foo = Ember._templateOnlyComponent(\\"foo-bar\\", \\"Foo\\");
-
-        Ember._setComponentTemplate(Ember.HTMLBars.template(
+        "const Foo = Ember._setComponentTemplate(Ember.HTMLBars.template(
         /*
           hello
         */
-        \\"precompiled(hello)\\"), Foo);"
+        \\"precompiled(hello)\\"), Ember._templateOnlyComponent(\\"foo-bar\\", \\"Foo\\"));"
       `);
     });
 
@@ -314,15 +320,11 @@ describe('htmlbars-inline-precompile: useTemplateLiteralProposalSemantics', func
       );
 
       expect(transpiled).toMatchInlineSnapshot(`
-        "const _fooBar = Ember._templateOnlyComponent(\\"foo-bar\\", \\"_fooBar\\");
-
-        Ember._setComponentTemplate(Ember.HTMLBars.template(
+        "export default Ember._setComponentTemplate(Ember.HTMLBars.template(
         /*
           hello
         */
-        \\"precompiled(hello)\\"), _fooBar);
-
-        export default _fooBar;"
+        \\"precompiled(hello)\\"), Ember._templateOnlyComponent(\\"foo-bar\\", \\"_fooBar\\"));"
       `);
     });
 
@@ -429,21 +431,17 @@ describe('htmlbars-inline-precompile: useTemplateLiteralProposalSemantics', func
         "define([], function () {
           \\"use strict\\";
 
-          const Foo = Ember._templateOnlyComponent(\\"foo-bar\\", \\"Foo\\");
-
-          Ember._setComponentTemplate(Ember.HTMLBars.template(
+          const Foo = Ember._setComponentTemplate(Ember.HTMLBars.template(
           /*
             hello
           */
-          \\"precompiled(hello)\\"), Foo);
+          \\"precompiled(hello)\\"), Ember._templateOnlyComponent(\\"foo-bar\\", \\"Foo\\"));
 
-          const Bar = Ember._templateOnlyComponent(\\"foo-bar\\", \\"Bar\\");
-
-          Ember._setComponentTemplate(Ember.HTMLBars.template(
+          const Bar = Ember._setComponentTemplate(Ember.HTMLBars.template(
           /*
             hello
           */
-          \\"precompiled(hello)\\"), Bar);
+          \\"precompiled(hello)\\"), Ember._templateOnlyComponent(\\"foo-bar\\", \\"Bar\\"));
         });"
       `);
     });

@@ -58,13 +58,11 @@ describe('htmlbars-inline-precompile: useTemplateTagProposalSemantics', function
       import { setComponentTemplate as _setComponentTemplate } from \\"@ember/component\\";
       import { createTemplateFactory as _createTemplateFactory } from \\"@ember/template-factory\\";
 
-      const Foo = _emberComponentTemplateOnly(\\"foo-bar\\", \\"Foo\\");
-
-      _setComponentTemplate(_createTemplateFactory(
+      const Foo = _setComponentTemplate(_createTemplateFactory(
       /*
         hello
       */
-      \\"precompiled(hello)\\"), Foo);"
+      \\"precompiled(hello)\\"), _emberComponentTemplateOnly(\\"foo-bar\\", \\"Foo\\"));"
     `);
   });
 
@@ -79,13 +77,11 @@ describe('htmlbars-inline-precompile: useTemplateTagProposalSemantics', function
       "import _emberComponentTemplateOnly from \\"@ember/component/template-only\\";
       import { setComponentTemplate as _setComponentTemplate } from \\"@ember/component\\";
       import { createTemplateFactory as _createTemplateFactory } from \\"@ember/template-factory\\";
-      export const Foo = _emberComponentTemplateOnly(\\"foo-bar\\", \\"Foo\\");
-
-      _setComponentTemplate(_createTemplateFactory(
+      export const Foo = _setComponentTemplate(_createTemplateFactory(
       /*
         hello
       */
-      \\"precompiled(hello)\\"), Foo);"
+      \\"precompiled(hello)\\"), _emberComponentTemplateOnly(\\"foo-bar\\", \\"Foo\\"));"
     `);
   });
 
@@ -97,19 +93,14 @@ describe('htmlbars-inline-precompile: useTemplateTagProposalSemantics', function
     );
 
     expect(transpiled).toMatchInlineSnapshot(`
-      "import { setComponentTemplate as _setComponentTemplate } from \\"@ember/component\\";
-      import _emberComponentTemplateOnly from \\"@ember/component/template-only\\";
+      "import _emberComponentTemplateOnly from \\"@ember/component/template-only\\";
+      import { setComponentTemplate as _setComponentTemplate } from \\"@ember/component\\";
       import { createTemplateFactory as _createTemplateFactory } from \\"@ember/template-factory\\";
-
-      const _fooBar = _emberComponentTemplateOnly(\\"foo-bar\\", \\"_fooBar\\");
-
-      _setComponentTemplate(_createTemplateFactory(
+      export default _setComponentTemplate(_createTemplateFactory(
       /*
         hello
       */
-      \\"precompiled(hello)\\"), _fooBar);
-
-      export default _fooBar;"
+      \\"precompiled(hello)\\"), _emberComponentTemplateOnly(\\"foo-bar\\", \\"_fooBar\\"));"
     `);
   });
 
@@ -121,19 +112,14 @@ describe('htmlbars-inline-precompile: useTemplateTagProposalSemantics', function
     );
 
     expect(transpiled).toMatchInlineSnapshot(`
-      "import { setComponentTemplate as _setComponentTemplate } from \\"@ember/component\\";
-      import _emberComponentTemplateOnly from \\"@ember/component/template-only\\";
+      "import _emberComponentTemplateOnly from \\"@ember/component/template-only\\";
+      import { setComponentTemplate as _setComponentTemplate } from \\"@ember/component\\";
       import { createTemplateFactory as _createTemplateFactory } from \\"@ember/template-factory\\";
-
-      const _fooBar = _emberComponentTemplateOnly(\\"foo-bar\\", \\"_fooBar\\");
-
-      _setComponentTemplate(_createTemplateFactory(
+      export default _setComponentTemplate(_createTemplateFactory(
       /*
         hello
       */
-      \\"precompiled(hello)\\"), _fooBar);
-
-      export default _fooBar;"
+      \\"precompiled(hello)\\"), _emberComponentTemplateOnly(\\"foo-bar\\", \\"_fooBar\\"));"
     `);
   });
 
@@ -246,12 +232,19 @@ describe('htmlbars-inline-precompile: useTemplateTagProposalSemantics', function
     });
   });
 
-  it('errors if used in an incorrect positions', function () {
-    expect(() => {
-      transform("func([GLIMMER_TEMPLATE('hello')]);");
-    }).toThrow(
-      /Attempted to use `<template>` to define a template in an unsupported way. Templates defined using this syntax must be:/
-    );
+  it('works when passed directly to a function', function () {
+    let transpiled = transform("func([GLIMMER_TEMPLATE('hello')]);");
+
+    expect(transpiled).toMatchInlineSnapshot(`
+      "import _emberComponentTemplateOnly from \\"@ember/component/template-only\\";
+      import { setComponentTemplate as _setComponentTemplate } from \\"@ember/component\\";
+      import { createTemplateFactory as _createTemplateFactory } from \\"@ember/template-factory\\";
+      func(_setComponentTemplate(_createTemplateFactory(
+      /*
+        hello
+      */
+      \\"precompiled(hello)\\"), _emberComponentTemplateOnly(\\"foo-bar\\", \\"_fooBar\\")));"
+    `);
   });
 
   it('errors if used with template literal syntax', function () {
@@ -296,21 +289,17 @@ describe('htmlbars-inline-precompile: useTemplateTagProposalSemantics', function
       import { setComponentTemplate as _setComponentTemplate } from \\"@ember/component\\";
       import { createTemplateFactory as _createTemplateFactory } from \\"@ember/template-factory\\";
 
-      const Foo = _emberComponentTemplateOnly(\\"foo-bar\\", \\"Foo\\");
-
-      _setComponentTemplate(_createTemplateFactory(
+      const Foo = _setComponentTemplate(_createTemplateFactory(
       /*
         hello
       */
-      \\"precompiled(hello)\\"), Foo);
+      \\"precompiled(hello)\\"), _emberComponentTemplateOnly(\\"foo-bar\\", \\"Foo\\"));
 
-      const Bar = _emberComponentTemplateOnly(\\"foo-bar\\", \\"Bar\\");
-
-      _setComponentTemplate(_createTemplateFactory(
+      const Bar = _setComponentTemplate(_createTemplateFactory(
       /*
         hello
       */
-      \\"precompiled(hello)\\"), Bar);"
+      \\"precompiled(hello)\\"), _emberComponentTemplateOnly(\\"foo-bar\\", \\"Bar\\"));"
     `);
   });
 
@@ -338,13 +327,11 @@ describe('htmlbars-inline-precompile: useTemplateTagProposalSemantics', function
       import { setComponentTemplate as _setComponentTemplate } from \\"@glimmer/core\\";
       import { createTemplateFactory as _createTemplateFactory } from \\"@glimmer/core\\";
 
-      const Foo = _templateOnlyComponent(\\"foo-bar\\", \\"Foo\\");
-
-      _setComponentTemplate(_createTemplateFactory(
+      const Foo = _setComponentTemplate(_createTemplateFactory(
       /*
         hello
       */
-      \\"precompiled(hello)\\"), Foo);"
+      \\"precompiled(hello)\\"), _templateOnlyComponent(\\"foo-bar\\", \\"Foo\\"));"
     `);
   });
 
@@ -361,13 +348,11 @@ describe('htmlbars-inline-precompile: useTemplateTagProposalSemantics', function
       );
 
       expect(transpiled).toMatchInlineSnapshot(`
-        "const Foo = Ember._templateOnlyComponent(\\"foo-bar\\", \\"Foo\\");
-
-        Ember._setComponentTemplate(Ember.HTMLBars.template(
+        "const Foo = Ember._setComponentTemplate(Ember.HTMLBars.template(
         /*
           hello
         */
-        \\"precompiled(hello)\\"), Foo);"
+        \\"precompiled(hello)\\"), Ember._templateOnlyComponent(\\"foo-bar\\", \\"Foo\\"));"
       `);
     });
 
@@ -379,13 +364,11 @@ describe('htmlbars-inline-precompile: useTemplateTagProposalSemantics', function
       );
 
       expect(transpiled).toMatchInlineSnapshot(`
-        "export const Foo = Ember._templateOnlyComponent(\\"foo-bar\\", \\"Foo\\");
-
-        Ember._setComponentTemplate(Ember.HTMLBars.template(
+        "export const Foo = Ember._setComponentTemplate(Ember.HTMLBars.template(
         /*
           hello
         */
-        \\"precompiled(hello)\\"), Foo);"
+        \\"precompiled(hello)\\"), Ember._templateOnlyComponent(\\"foo-bar\\", \\"Foo\\"));"
       `);
     });
 
@@ -397,15 +380,11 @@ describe('htmlbars-inline-precompile: useTemplateTagProposalSemantics', function
       );
 
       expect(transpiled).toMatchInlineSnapshot(`
-        "const _fooBar = Ember._templateOnlyComponent(\\"foo-bar\\", \\"_fooBar\\");
-
-        Ember._setComponentTemplate(Ember.HTMLBars.template(
+        "export default Ember._setComponentTemplate(Ember.HTMLBars.template(
         /*
           hello
         */
-        \\"precompiled(hello)\\"), _fooBar);
-
-        export default _fooBar;"
+        \\"precompiled(hello)\\"), Ember._templateOnlyComponent(\\"foo-bar\\", \\"_fooBar\\"));"
       `);
     });
 
@@ -417,15 +396,11 @@ describe('htmlbars-inline-precompile: useTemplateTagProposalSemantics', function
       );
 
       expect(transpiled).toMatchInlineSnapshot(`
-        "const _fooBar = Ember._templateOnlyComponent(\\"foo-bar\\", \\"_fooBar\\");
-
-        Ember._setComponentTemplate(Ember.HTMLBars.template(
+        "export default Ember._setComponentTemplate(Ember.HTMLBars.template(
         /*
           hello
         */
-        \\"precompiled(hello)\\"), _fooBar);
-
-        export default _fooBar;"
+        \\"precompiled(hello)\\"), Ember._templateOnlyComponent(\\"foo-bar\\", \\"_fooBar\\"));"
       `);
     });
 
@@ -522,21 +497,17 @@ describe('htmlbars-inline-precompile: useTemplateTagProposalSemantics', function
         "define([], function () {
           \\"use strict\\";
 
-          const Foo = Ember._templateOnlyComponent(\\"foo-bar\\", \\"Foo\\");
-
-          Ember._setComponentTemplate(Ember.HTMLBars.template(
+          const Foo = Ember._setComponentTemplate(Ember.HTMLBars.template(
           /*
             hello
           */
-          \\"precompiled(hello)\\"), Foo);
+          \\"precompiled(hello)\\"), Ember._templateOnlyComponent(\\"foo-bar\\", \\"Foo\\"));
 
-          const Bar = Ember._templateOnlyComponent(\\"foo-bar\\", \\"Bar\\");
-
-          Ember._setComponentTemplate(Ember.HTMLBars.template(
+          const Bar = Ember._setComponentTemplate(Ember.HTMLBars.template(
           /*
             hello
           */
-          \\"precompiled(hello)\\"), Bar);
+          \\"precompiled(hello)\\"), Ember._templateOnlyComponent(\\"foo-bar\\", \\"Bar\\"));
         });"
       `);
     });
