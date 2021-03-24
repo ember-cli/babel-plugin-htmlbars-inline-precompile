@@ -1,3 +1,13 @@
+## v5.2.0 (2021-03-24)
+
+#### :rocket: Enhancement
+* [#361](https://github.com/ember-cli/babel-plugin-htmlbars-inline-precompile/pull/361) Add `preprocessEmbeddedTemplates` function ([@pzuraq](https://github.com/pzuraq))
+* [#362](https://github.com/ember-cli/babel-plugin-htmlbars-inline-precompile/pull/362) Allow usage of proposals to be used in arbitrary expression positions ([@pzuraq](https://github.com/pzuraq))
+
+#### Committers: 1
+- Chris Garrett ([@pzuraq](https://github.com/pzuraq))
+
+
 ## v5.1.0 (2021-03-23)
 
 #### :rocket: Enhancement
