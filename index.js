@@ -543,3 +543,5 @@ module.exports._parallelBabel = {
 module.exports.baseDir = function () {
   return __dirname;
 };
+
+module.exports.preprocessEmbeddedTemplates = require('./dist/preprocess-embedded-templates').default;

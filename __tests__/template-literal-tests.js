@@ -4,6 +4,20 @@ const babel = require('@babel/core');
 const HTMLBarsInlinePrecompile = require('../index');
 const TransformModules = require('@babel/plugin-transform-modules-amd');
 
+const { preprocessEmbeddedTemplates } = HTMLBarsInlinePrecompile;
+
+const TEMPLATE_LITERAL_CONFIG = {
+  getTemplateLocalsRequirePath: require.resolve('@glimmer/syntax'),
+  getTemplateLocalsExportPath: 'getTemplateLocals',
+
+  importIdentifier: 'hbs',
+  importPath: 'ember-template-imports',
+
+  relativePath: '/foo/bar.js',
+  includeSourceMaps: false,
+  includeTemplateTokens: true,
+};
+
 describe('htmlbars-inline-precompile: useTemplateLiteralProposalSemantics', function () {
   let precompile, plugins, optionsReceived;
 
@@ -285,6 +299,231 @@ describe('htmlbars-inline-precompile: useTemplateLiteralProposalSemantics', func
       */
       \\"precompiled(hello)\\"), _templateOnlyComponent(\\"foo-bar\\", \\"Foo\\"));"
     `);
+  });
+
+  describe('with preprocessing', function () {
+    it('works with templates assigned to variables', function () {
+      let transpiled = transform(
+        preprocessEmbeddedTemplates(
+          `
+            import { hbs } from 'ember-template-imports';
+
+            const Foo = hbs\`hello\`;
+          `,
+          TEMPLATE_LITERAL_CONFIG
+        ).output
+      );
+
+      expect(transpiled).toMatchInlineSnapshot(`
+        "import _emberComponentTemplateOnly from \\"@ember/component/template-only\\";
+        import { setComponentTemplate as _setComponentTemplate } from \\"@ember/component\\";
+        import { createTemplateFactory as _createTemplateFactory } from \\"@ember/template-factory\\";
+
+        const Foo = _setComponentTemplate(_createTemplateFactory(
+        /*
+          hello
+        */
+        \\"precompiled(hello)\\"), _emberComponentTemplateOnly(\\"foo-bar\\", \\"Foo\\"));"
+      `);
+    });
+
+    it('works with templates exported as the default', function () {
+      let transpiled = transform(
+        preprocessEmbeddedTemplates(
+          `
+            import { hbs } from 'ember-template-imports';
+
+            export default hbs\`hello\`;
+          `,
+          TEMPLATE_LITERAL_CONFIG
+        ).output
+      );
+
+      expect(transpiled).toMatchInlineSnapshot(`
+        "import _emberComponentTemplateOnly from \\"@ember/component/template-only\\";
+        import { setComponentTemplate as _setComponentTemplate } from \\"@ember/component\\";
+        import { createTemplateFactory as _createTemplateFactory } from \\"@ember/template-factory\\";
+        export default _setComponentTemplate(_createTemplateFactory(
+        /*
+          hello
+        */
+        \\"precompiled(hello)\\"), _emberComponentTemplateOnly(\\"foo-bar\\", \\"_fooBar\\"));"
+      `);
+    });
+
+    it('works with templates assigned to classes', function () {
+      let transpiled = transform(
+        preprocessEmbeddedTemplates(
+          `
+            import { hbs } from 'ember-template-imports';
+
+            class Foo {
+              static template = hbs\`hello\`;
+            }
+          `,
+          TEMPLATE_LITERAL_CONFIG
+        ).output
+      );
+
+      expect(transpiled).toMatchInlineSnapshot(`
+        "import { setComponentTemplate as _setComponentTemplate } from \\"@ember/component\\";
+        import { createTemplateFactory as _createTemplateFactory } from \\"@ember/template-factory\\";
+
+        class Foo {}
+
+        _setComponentTemplate(_createTemplateFactory(
+        /*
+          hello
+        */
+        \\"precompiled(hello)\\"), Foo);"
+      `);
+    });
+
+    it('works with templates assigned to class expressions', function () {
+      let transpiled = transform(
+        preprocessEmbeddedTemplates(
+          `
+            import { hbs } from 'ember-template-imports';
+
+            const Foo = class {
+              static template = hbs\`hello\`;
+            }
+          `,
+          TEMPLATE_LITERAL_CONFIG
+        ).output
+      );
+
+      expect(transpiled).toMatchInlineSnapshot(`
+        "import { setComponentTemplate as _setComponentTemplate } from \\"@ember/component\\";
+        import { createTemplateFactory as _createTemplateFactory } from \\"@ember/template-factory\\";
+
+        const Foo = _setComponentTemplate(_createTemplateFactory(
+        /*
+          hello
+        */
+        \\"precompiled(hello)\\"), class {});"
+      `);
+    });
+
+    it('works with templates assigned to export classes', function () {
+      let transpiled = transform(
+        preprocessEmbeddedTemplates(
+          `
+            import { hbs } from 'ember-template-imports';
+
+            export class Foo {
+              static template = hbs\`hello\`;
+            }
+          `,
+          TEMPLATE_LITERAL_CONFIG
+        ).output
+      );
+
+      expect(transpiled).toMatchInlineSnapshot(`
+        "import { setComponentTemplate as _setComponentTemplate } from \\"@ember/component\\";
+        import { createTemplateFactory as _createTemplateFactory } from \\"@ember/template-factory\\";
+        export class Foo {}
+
+        _setComponentTemplate(_createTemplateFactory(
+        /*
+          hello
+        */
+        \\"precompiled(hello)\\"), Foo);"
+      `);
+    });
+
+    it('works with templates assigned to export default classes', function () {
+      let transpiled = transform(
+        preprocessEmbeddedTemplates(
+          `
+            import { hbs } from 'ember-template-imports';
+
+            export default class Foo {
+              static template = hbs\`hello\`;
+            }
+          `,
+          TEMPLATE_LITERAL_CONFIG
+        ).output
+      );
+
+      expect(transpiled).toMatchInlineSnapshot(`
+        "import { setComponentTemplate as _setComponentTemplate } from \\"@ember/component\\";
+        import { createTemplateFactory as _createTemplateFactory } from \\"@ember/template-factory\\";
+        export default class Foo {}
+
+        _setComponentTemplate(_createTemplateFactory(
+        /*
+          hello
+        */
+        \\"precompiled(hello)\\"), Foo);"
+      `);
+    });
+
+    it('correctly handles scope', function () {
+      let source = '<div>{{foo}} {{bar}} <Baz/></div>';
+      transform(
+        preprocessEmbeddedTemplates(
+          `
+            import { hbs } from 'ember-template-imports';
+            import Baz from 'qux';
+
+            let foo = 123;
+            const bar = 456;
+
+            export default hbs\`${source}\`;
+          `,
+          TEMPLATE_LITERAL_CONFIG
+        ).output
+      );
+
+      expect(optionsReceived).toEqual({
+        contents: source,
+        isProduction: undefined,
+        locals: ['Baz', 'foo', 'bar'],
+        strictMode: true,
+      });
+    });
+
+    it('works if used in an arbitrary expression statement', function () {
+      let transpiled = transform(
+        preprocessEmbeddedTemplates(
+          "import { hbs } from 'ember-template-imports';\nhbs`hello`;",
+          TEMPLATE_LITERAL_CONFIG
+        ).output
+      );
+
+      expect(transpiled).toMatchInlineSnapshot(`
+        "import _emberComponentTemplateOnly from \\"@ember/component/template-only\\";
+        import { setComponentTemplate as _setComponentTemplate } from \\"@ember/component\\";
+        import { createTemplateFactory as _createTemplateFactory } from \\"@ember/template-factory\\";
+
+        _setComponentTemplate(_createTemplateFactory(
+        /*
+          hello
+        */
+        \\"precompiled(hello)\\"), _emberComponentTemplateOnly(\\"foo-bar\\", \\"_fooBar\\"));"
+      `);
+    });
+
+    it('works when passed directly to a function', function () {
+      let transpiled = transform(
+        preprocessEmbeddedTemplates(
+          "import { hbs } from 'ember-template-imports';\nfunc(hbs`hello`);",
+          TEMPLATE_LITERAL_CONFIG
+        ).output
+      );
+
+      expect(transpiled).toMatchInlineSnapshot(`
+        "import _emberComponentTemplateOnly from \\"@ember/component/template-only\\";
+        import { setComponentTemplate as _setComponentTemplate } from \\"@ember/component\\";
+        import { createTemplateFactory as _createTemplateFactory } from \\"@ember/template-factory\\";
+        func(_setComponentTemplate(_createTemplateFactory(
+        /*
+          hello
+        */
+        \\"precompiled(hello)\\"), _emberComponentTemplateOnly(\\"foo-bar\\", \\"_fooBar\\")));"
+      `);
+    });
   });
 
   describe('with babel-plugin-ember-modules-api-polyfill', function () {

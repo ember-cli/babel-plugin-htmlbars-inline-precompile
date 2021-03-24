@@ -1,0 +1,43 @@
+{
+  "compilerOptions": {
+    // Compilation Configuration
+    "target": "es2015",
+    "module": "commonjs",
+    "inlineSources": true,
+    "inlineSourceMap": true,
+    "declaration": true,
+    "outDir": "dist",
+    "baseUrl": ".",
+    "rootDir": "src",
+
+    // Environment Configuration
+    "experimentalDecorators": true,
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+
+    // Enhance Strictness
+    "noUnusedLocals": true,
+    "noImplicitThis": true,
+    "noImplicitAny": true,
+    "suppressImplicitAnyIndexErrors": false,
+    "noUnusedParameters": true,
+    "strictNullChecks": true,
+    "allowUnreachableCode": false,
+    "noImplicitReturns": true,
+    "skipLibCheck": true,
+    "skipDefaultLibCheck": true,
+
+    "newLine": "LF",
+
+    "paths": {
+      "*": ["*", "*/src"]
+    }
+  },
+  "include": [
+    // Because of the circular dependency, we have to avoid specifying globs
+    // that include node_modules.
+    "index.ts",
+    "local-types.d.ts",
+    "src/**/*.ts"
+  ],
+}
