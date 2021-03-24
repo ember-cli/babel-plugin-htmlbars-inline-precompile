@@ -1,3 +1,12 @@
+## v5.2.1 (2021-03-24)
+
+#### :bug: Bug Fix
+* [#368](https://github.com/ember-cli/babel-plugin-htmlbars-inline-precompile/pull/368) Account for comments in preprocessor for proposals ([@pzuraq](https://github.com/pzuraq))
+
+#### Committers: 1
+- Chris Garrett ([@pzuraq](https://github.com/pzuraq))
+
+
 ## v5.2.0 (2021-03-24)
 
 #### :rocket: Enhancement
