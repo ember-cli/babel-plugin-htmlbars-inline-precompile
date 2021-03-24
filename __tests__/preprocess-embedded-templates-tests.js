@@ -245,6 +245,55 @@ describe('htmlbars-inline-precompile: preprocessEmbeddedTemplates', () => {
       `);
     });
 
+    it('it does not process templates or tokens in comments', () => {
+      let preprocessed = preprocessEmbeddedTemplates(
+        stripIndent`
+          // <template></template>
+          /* <template></template> */
+          /*
+            <template></template>
+            other tokens
+            \`"'/
+          */
+
+          <template></template>
+        `,
+        TEMPLATE_TAG_CONFIG
+      );
+
+      expect(preprocessed).toMatchInlineSnapshot(`
+        Object {
+          "output": "// <template></template>
+        /* <template></template> */
+        /*
+          <template></template>
+          other tokens
+          \`\\"'/
+        */
+
+        [GLIMMER_TEMPLATE(\`\`)]",
+          "replacements": Array [
+            Object {
+              "index": 106,
+              "newLength": 19,
+              "oldLength": 10,
+              "originalCol": 1,
+              "originalLine": 9,
+              "type": "start",
+            },
+            Object {
+              "index": 116,
+              "newLength": 3,
+              "oldLength": 11,
+              "originalCol": 11,
+              "originalLine": 9,
+              "type": "end",
+            },
+          ],
+        }
+      `);
+    });
+
     it('works with class templates', () => {
       let preprocessed = preprocessEmbeddedTemplates(
         stripIndent`
@@ -614,6 +663,59 @@ describe('htmlbars-inline-precompile: preprocessEmbeddedTemplates', () => {
               "oldLength": 1,
               "originalCol": 3,
               "originalLine": 6,
+              "type": "end",
+            },
+          ],
+        }
+      `);
+    });
+
+    it('it does not process templates or tokens in comments', () => {
+      let preprocessed = preprocessEmbeddedTemplates(
+        stripIndent`
+          import { hbs } from 'ember-template-imports';
+
+          // hbs\`hello\`
+          /* hbs\`hello\` */
+          /*
+            hbs\`hello\`
+            other tokens
+            \`"'/
+          */
+
+          export default hbs\`hello\`;
+        `,
+        TEMPLATE_LITERAL_CONFIG
+      );
+
+      expect(preprocessed).toMatchInlineSnapshot(`
+        Object {
+          "output": "import { hbs } from 'ember-template-imports';
+
+        // hbs\`hello\`
+        /* hbs\`hello\` */
+        /*
+          hbs\`hello\`
+          other tokens
+          \`\\"'/
+        */
+
+        export default hbs(\`hello\`);",
+          "replacements": Array [
+            Object {
+              "index": 135,
+              "newLength": 5,
+              "oldLength": 4,
+              "originalCol": 16,
+              "originalLine": 11,
+              "type": "start",
+            },
+            Object {
+              "index": 144,
+              "newLength": 2,
+              "oldLength": 1,
+              "originalCol": 25,
+              "originalLine": 11,
               "type": "end",
             },
           ],
