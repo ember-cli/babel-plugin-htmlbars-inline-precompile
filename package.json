@@ -23,7 +23,7 @@
     "dist/**/*.js"
   ],
   "dependencies": {
-    "babel-plugin-ember-modules-api-polyfill": "^3.4.0",
+    "babel-plugin-ember-modules-api-polyfill": "^3.5.0",
     "line-column": "^1.0.2",
     "magic-string": "^0.25.7",
     "parse-static-imports": "^1.1.0",
