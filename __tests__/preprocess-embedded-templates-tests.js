@@ -13,7 +13,7 @@ const EAGER_TEMPLATE_TAG_CONFIG = {
   relativePath: '/foo/bar.gjs',
   includeSourceMaps: false,
   includeTemplateTokens: true,
-}
+};
 
 const TEMPLATE_TAG_CONFIG = {
   getTemplateLocalsRequirePath,
