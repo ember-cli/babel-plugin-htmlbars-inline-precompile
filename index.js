@@ -259,7 +259,7 @@ module.exports = function (babel) {
           });
 
           if (importSpecifier) {
-            addedImports[exportName] = [importSpecifier.node.local];
+            addedImports[exportName] = { id: importSpecifier.node.local };
           }
         }
 
