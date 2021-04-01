@@ -1,3 +1,12 @@
+## v5.2.2 (2021-04-01)
+
+#### :bug: Bug Fix
+* [#377](https://github.com/ember-cli/babel-plugin-htmlbars-inline-precompile/pull/377) Ensure preexisting imports work correctly ([@chadhietala](https://github.com/chadhietala))
+
+#### Committers: 1
+- Chad Hietala ([@chadhietala](https://github.com/chadhietala))
+
+
 ## v5.2.1 (2021-03-24)
 
 #### :bug: Bug Fix
