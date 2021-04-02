@@ -573,6 +573,26 @@ describe('htmlbars-inline-precompile', function () {
     `);
   });
 
+  it('does not error when reusing a preexisting import', function () {
+    plugins.push([TransformModules]);
+    let transformed = transform(
+      "import { createTemplateFactory } from '@ember/template-factory'; import hbs from 'htmlbars-inline-precompile'; hbs`hello`; createTemplateFactory('whatever here');"
+    );
+
+    expect(transformed).toMatchInlineSnapshot(`
+      "define([\\"@ember/template-factory\\"], function (_templateFactory) {
+        \\"use strict\\";
+
+        (0, _templateFactory.createTemplateFactory)(
+        /*
+          hello
+        */
+        \\"precompiled(hello)\\");
+        (0, _templateFactory.createTemplateFactory)('whatever here');
+      });"
+    `);
+  });
+
   it('works properly when used along with modules transform multiple times', function () {
     plugins.push([TransformModules]);
     let transformed = transform(
