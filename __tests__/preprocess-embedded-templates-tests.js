@@ -2,6 +2,18 @@ const { preprocessEmbeddedTemplates } = require('../index');
 const { stripIndent } = require('common-tags');
 
 const getTemplateLocalsRequirePath = require.resolve('@glimmer/syntax');
+const { getTemplateLocals } = require('@glimmer/syntax');
+
+const EAGER_TEMPLATE_TAG_CONFIG = {
+  getTemplateLocals,
+
+  templateTag: 'template',
+  templateTagReplacement: 'GLIMMER_TEMPLATE',
+
+  relativePath: '/foo/bar.gjs',
+  includeSourceMaps: false,
+  includeTemplateTokens: true,
+};
 
 const TEMPLATE_TAG_CONFIG = {
   getTemplateLocalsRequirePath,
@@ -29,6 +41,39 @@ const TEMPLATE_LITERAL_CONFIG = {
 
 describe('htmlbars-inline-precompile: preprocessEmbeddedTemplates', () => {
   describe('template tag', () => {
+    it('works with eager config', () => {
+      let preprocessed = preprocessEmbeddedTemplates(
+        stripIndent`
+          <template>Hello, world!</template>
+        `,
+        EAGER_TEMPLATE_TAG_CONFIG
+      );
+
+      expect(preprocessed).toMatchInlineSnapshot(`
+        Object {
+          "output": "[GLIMMER_TEMPLATE(\`Hello, world!\`)]",
+          "replacements": Array [
+            Object {
+              "index": 0,
+              "newLength": 19,
+              "oldLength": 10,
+              "originalCol": 1,
+              "originalLine": 1,
+              "type": "start",
+            },
+            Object {
+              "index": 23,
+              "newLength": 3,
+              "oldLength": 11,
+              "originalCol": 24,
+              "originalLine": 1,
+              "type": "end",
+            },
+          ],
+        }
+      `);
+    });
+
     it('works with basic templates', () => {
       let preprocessed = preprocessEmbeddedTemplates(
         stripIndent`
