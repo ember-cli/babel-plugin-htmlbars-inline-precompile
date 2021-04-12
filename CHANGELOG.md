@@ -1,3 +1,16 @@
+## v5.3.0 (2021-04-12)
+
+#### :rocket: Enhancement
+* [#370](https://github.com/ember-cli/babel-plugin-htmlbars-inline-precompile/pull/370) Allow passing getTemplateLocals function directly as an option ([@NullVoxPopuli](https://github.com/NullVoxPopuli))
+
+#### :house: Internal
+* [#378](https://github.com/ember-cli/babel-plugin-htmlbars-inline-precompile/pull/378) Add test for reusing an import. ([@rwjblue](https://github.com/rwjblue))
+
+#### Committers: 2
+- Robert Jackson ([@rwjblue](https://github.com/rwjblue))
+- [@NullVoxPopuli](https://github.com/NullVoxPopuli)
+
+
 ## v5.2.2 (2021-04-01)
 
 #### :bug: Bug Fix
