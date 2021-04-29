@@ -150,6 +150,27 @@ describe('htmlbars-inline-precompile: useTemplateLiteralProposalSemantics', func
     `);
   });
 
+  it('works with anonymous class declarations exported as the default', function () {
+    let transpiled = transform(
+      `
+        import { hbs } from 'ember-template-imports';
+        export default class {
+          static template = hbs\`hello\`;
+        }
+      `
+    );
+
+    expect(transpiled).toMatchInlineSnapshot(`
+      "import { setComponentTemplate as _setComponentTemplate } from \\"@ember/component\\";
+      import { createTemplateFactory as _createTemplateFactory } from \\"@ember/template-factory\\";
+      export default _setComponentTemplate(_createTemplateFactory(
+      /*
+        hello
+      */
+      \\"precompiled(hello)\\"), class {});"
+    `);
+  });
+
   it('works with templates assigned to export classes', function () {
     let transpiled = transform(
       `
