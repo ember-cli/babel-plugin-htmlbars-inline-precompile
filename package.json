@@ -35,7 +35,7 @@
     "@babel/plugin-transform-modules-amd": "^7.14.2",
     "@babel/plugin-transform-template-literals": "^7.13.0",
     "@babel/plugin-transform-unicode-escapes": "^7.12.13",
-    "@glimmer/syntax": "^0.77.6",
+    "@glimmer/syntax": "^0.79.2",
     "@types/line-column": "^1.0.0",
     "@types/string.prototype.matchall": "^4.0.0",
     "@typescript-eslint/eslint-plugin": "^4.25.0",
