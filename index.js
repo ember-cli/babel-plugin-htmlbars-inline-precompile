@@ -41,11 +41,9 @@ module.exports = function (babel) {
     if (node.type === 'ObjectMethod') {
       body = node.body;
     } else if (node.value.type === 'ObjectExpression') {
-      console.warn(
-        `Passing an object as the \`scope\` property to inline templates has been deprecated. Please pass a function that returns an object expression instead. Usage in: ${state.file.opts.filename}`
+      throw new Error(
+        `Passing an object as the \`scope\` property to inline templates is no longer supported. Please pass a function that returns an object expression instead. Usage in: ${state.file.opts.filename}`
       );
-
-      body = node.value;
     } else {
       body = node.value.body;
     }

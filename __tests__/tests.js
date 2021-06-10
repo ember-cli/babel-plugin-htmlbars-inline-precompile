@@ -852,18 +852,6 @@ describe('htmlbars-inline-precompile', function () {
       ];
     });
 
-    it('correctly handles scope', function () {
-      let source = 'hello';
-      transform(
-        `import { precompileTemplate } from '@ember/template-compilation';\nvar compiled = precompileTemplate('${source}', { scope: { foo, bar } });`
-      );
-
-      expect(optionsReceived).toEqual({
-        contents: source,
-        locals: ['foo', 'bar'],
-      });
-    });
-
     it('correctly handles scope function', function () {
       let source = 'hello';
       transform(
@@ -923,7 +911,7 @@ describe('htmlbars-inline-precompile', function () {
     it('errors if scope contains mismatched keys/values', function () {
       expect(() => {
         transform(
-          "import { precompileTemplate } from '@ember/template-compilation';\nvar compiled = precompileTemplate('hello', { scope: { foo: bar } });"
+          "import { precompileTemplate } from '@ember/template-compilation';\nvar compiled = precompileTemplate('hello', { scope: () => ({ foo: bar }) });"
         );
       }).toThrow(
         /Scope objects for `precompileTemplate` may only contain direct references to in-scope values, e.g. { foo } or { foo: foo }/
@@ -933,7 +921,7 @@ describe('htmlbars-inline-precompile', function () {
     it('errors if scope is not an object', function () {
       expect(() => {
         transform(
-          "import { precompileTemplate } from '@ember/template-compilation';\nvar compiled = precompileTemplate('hello', { scope: ['foo', 'bar'] });"
+          "import { precompileTemplate } from '@ember/template-compilation';\nvar compiled = precompileTemplate('hello', { scope: () => ['foo', 'bar'] });"
         );
       }).toThrow(
         /Scope objects for `precompileTemplate` must be an object expression containing only references to in-scope values/
@@ -943,7 +931,7 @@ describe('htmlbars-inline-precompile', function () {
     it('errors if scope contains any non-reference values', function () {
       expect(() => {
         transform(
-          "import { precompileTemplate } from '@ember/template-compilation';\nvar compiled = precompileTemplate('hello', { scope: { foo, bar: 123 } });"
+          "import { precompileTemplate } from '@ember/template-compilation';\nvar compiled = precompileTemplate('hello', { scope: () => ({ foo, bar: 123 }) });"
         );
       }).toThrow(
         /Scope objects for `precompileTemplate` may only contain direct references to in-scope values, e.g. { bar } or { bar: bar }/
