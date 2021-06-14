@@ -7,7 +7,6 @@ import { resolve } from 'path';
 export interface Options {
   templateCompilerPath?: string;
   precompile?: typeof glimmerPrecompile;
-  useEmberModule?: boolean;
   moduleOverrides?: Record<string, Record<string, string>>;
   modules?: {
     [importPath: string]: string | ModuleOptions;
@@ -233,7 +232,6 @@ export default function htmlbarsInlinePrecompile(babel: typeof Babel) {
   }
 
   function ensureImport(exportName: string, moduleName: string, state: State): t.Identifier {
-    let useEmberModule = Boolean(state.opts.useEmberModule);
     let moduleOverrides = state.opts.moduleOverrides;
 
     let addedImports = (state.allAddedImports[moduleName] =
@@ -249,12 +247,6 @@ export default function htmlbarsInlinePrecompile(babel: typeof Babel) {
         exportName = glimmerExport[0];
         moduleName = glimmerExport[1];
       }
-    }
-
-    if (exportName === 'default' && moduleName === 'ember' && !useEmberModule) {
-      addedImports[exportName] = { id: t.identifier('Ember') };
-
-      return addedImports[exportName].id;
     }
 
     let importDeclarations = state.programPath
