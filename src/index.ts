@@ -11,7 +11,6 @@ export interface Options {
   modules?: {
     [importPath: string]: string | ModuleOptions;
   };
-  modulePaths?: string[];
   isProduction?: boolean;
 }
 
@@ -316,12 +315,6 @@ export default function htmlbarsInlinePrecompile(babel: typeof Babel) {
         let modules = state.opts.modules || {
           'htmlbars-inline-precompile': { export: 'default', shouldParseScope: false },
         };
-
-        if (state.opts.modulePaths) {
-          let modulePaths = state.opts.modulePaths;
-
-          modulePaths.forEach((path) => (modules[path] = { export: 'default' }));
-        }
 
         let presentModules: State['presentModules'] = new Map();
         let importDeclarations = path

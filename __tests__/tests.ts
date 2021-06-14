@@ -359,13 +359,15 @@ describe('htmlbars-inline-precompile', function () {
     plugins = [
       [
         HTMLBarsInlinePrecompile,
-        buildOptions({ modulePaths: ['ember-cli-htmlbars-inline-precompile'] }),
+        buildOptions({
+          modules: {
+            'foo-bar': { export: 'default' },
+          },
+        }),
       ],
     ];
 
-    let transformed = transform(
-      "import hbs from 'ember-cli-htmlbars-inline-precompile';\nvar compiled = hbs`hello`;"
-    );
+    let transformed = transform("import hbs from 'foo-bar';\nvar compiled = hbs`hello`;");
 
     expect(transformed).toMatchInlineSnapshot(`
       "import { createTemplateFactory as _createTemplateFactory } from \\"@ember/template-factory\\";
