@@ -6,9 +6,6 @@
     "inlineSources": true,
     "inlineSourceMap": true,
     "declaration": true,
-    "outDir": "dist",
-    "baseUrl": ".",
-    "rootDir": "src",
 
     // Environment Configuration
     "experimentalDecorators": true,
@@ -26,18 +23,13 @@
     "noImplicitReturns": true,
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
+    "strict": true,
 
     "newLine": "LF",
-
-    "paths": {
-      "*": ["*", "*/src"]
-    }
   },
   "include": [
-    // Because of the circular dependency, we have to avoid specifying globs
-    // that include node_modules.
-    "index.ts",
+    "./src/**/*.ts",
+    "./__tests__/**/*.ts",
     "local-types.d.ts",
-    "src/**/*.ts"
   ],
 }

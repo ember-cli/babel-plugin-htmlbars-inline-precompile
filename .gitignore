@@ -3,3 +3,9 @@ node_modules
 /.eslintcache
 /dist
 yarn-error.log
+/src/**/*.d.ts
+/src/**/*.js
+/src/**/*.js.map
+/__tests__/**/*.d.ts
+/__tests__/**/*.js
+/__tests__/**/*.js.map

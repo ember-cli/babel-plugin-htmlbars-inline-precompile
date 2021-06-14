@@ -1,24 +1,25 @@
-'use strict';
-
-const path = require('path');
-
-const babel = require('@babel/core');
-const HTMLBarsInlinePrecompile = require('../index');
-const TransformTemplateLiterals = require('@babel/plugin-transform-template-literals');
-const TransformModules = require('@babel/plugin-transform-modules-amd');
-const TransformUnicodeEscapes = require('@babel/plugin-transform-unicode-escapes');
-const { stripIndent } = require('common-tags');
+import path from 'path';
+import * as babel from '@babel/core';
+import HTMLBarsInlinePrecompile, { Options } from '../src/index';
+import TransformTemplateLiterals from '@babel/plugin-transform-template-literals';
+import TransformModules from '@babel/plugin-transform-modules-amd';
+import TransformUnicodeEscapes from '@babel/plugin-transform-unicode-escapes';
+import { stripIndent } from 'common-tags';
 
 describe('htmlbars-inline-precompile', function () {
-  let precompile, plugins, optionsReceived;
+  let precompile: NonNullable<Options['precompile']>;
+  let plugins: any[];
+  let optionsReceived: any;
+  let buildOptions: (o?: Partial<Options>) => Options;
 
-  function transform(code) {
-    return babel
+  function transform(code: string) {
+    let x = babel
       .transform(code, {
         filename: 'foo-bar.js',
         plugins,
-      })
-      .code.trim();
+      })!
+      .code!.trim();
+    return x;
   }
 
   beforeEach(function () {
@@ -28,18 +29,17 @@ describe('htmlbars-inline-precompile', function () {
       return `"precompiled(${template})"`;
     };
 
-    plugins = [
-      [
-        HTMLBarsInlinePrecompile,
-        {
-          precompile() {
-            return precompile.apply(this, arguments);
-          },
-
-          ensureModuleApiPolyfill: false,
+    buildOptions = function (o?: Partial<Options>): Options {
+      let defaultOptions: Options = {
+        precompile(...args: Parameters<typeof precompile>) {
+          return precompile(...args);
         },
-      ],
-    ];
+      };
+
+      return Object.assign({}, defaultOptions, o);
+    };
+
+    plugins = [[HTMLBarsInlinePrecompile, buildOptions()]];
   });
 
   it('supports compilation that returns a non-JSON.parseable object', function () {
@@ -65,7 +65,12 @@ describe('htmlbars-inline-precompile', function () {
   });
 
   it('supports compilation with templateCompilerPath', function () {
-    plugins[0][1].templateCompilerPath = require.resolve('./mock-precompile');
+    plugins = [
+      [
+        HTMLBarsInlinePrecompile,
+        buildOptions({ templateCompilerPath: require.resolve('./mock-precompile') }),
+      ],
+    ];
 
     let transpiled = transform(
       "import hbs from 'htmlbars-inline-precompile';\nvar compiled = hbs`hello`;"
@@ -127,15 +132,9 @@ describe('htmlbars-inline-precompile', function () {
     plugins = [
       [
         HTMLBarsInlinePrecompile,
-        {
-          precompile() {
-            return precompile.apply(this, arguments);
-          },
-
-          ensureModuleApiPolyfill: false,
+        buildOptions({
           isProduction: true,
-          locals: null,
-        },
+        }),
       ],
     ];
 
@@ -153,13 +152,9 @@ describe('htmlbars-inline-precompile', function () {
     plugins = [
       [
         HTMLBarsInlinePrecompile,
-        {
-          precompile() {
-            return precompile.apply(this, arguments);
-          },
-
+        buildOptions({
           isProduction: false,
-        },
+        }),
       ],
     ];
 
@@ -179,14 +174,9 @@ describe('htmlbars-inline-precompile', function () {
     plugins = [
       [
         HTMLBarsInlinePrecompile,
-        {
-          precompile() {
-            return precompile.apply(this, arguments);
-          },
-
-          ensureModuleApiPolyfill: false,
+        buildOptions({
           isProduction: true,
-        },
+        }),
       ],
     ];
 
@@ -320,7 +310,8 @@ describe('htmlbars-inline-precompile', function () {
       "import hbs from 'htmlbars-inline-precompile';\nimport Ember from 'ember';"
     );
 
-    expect(transformed).toEqual("import Ember from 'ember';", 'strips import statement');
+    // strips import statement
+    expect(transformed).toEqual("import Ember from 'ember';");
   });
 
   it('replaces tagged template expressions with precompiled version', function () {
@@ -340,9 +331,16 @@ describe('htmlbars-inline-precompile', function () {
   });
 
   it('replaces tagged template expressions with precompiled version for custom import paths with named exports', function () {
-    plugins[0][1].modules = {
-      'foo-bar': 'baz',
-    };
+    plugins = [
+      [
+        HTMLBarsInlinePrecompile,
+        buildOptions({
+          modules: {
+            'foo-bar': 'baz',
+          },
+        }),
+      ],
+    ];
 
     let transformed = transform("import { baz } from 'foo-bar';\nvar compiled = baz`hello`;");
 
@@ -358,7 +356,12 @@ describe('htmlbars-inline-precompile', function () {
   });
 
   it('replaces tagged template expressions with precompiled version for custom import paths', function () {
-    plugins[0][1].modulePaths = ['ember-cli-htmlbars-inline-precompile'];
+    plugins = [
+      [
+        HTMLBarsInlinePrecompile,
+        buildOptions({ modulePaths: ['ember-cli-htmlbars-inline-precompile'] }),
+      ],
+    ];
 
     let transformed = transform(
       "import hbs from 'ember-cli-htmlbars-inline-precompile';\nvar compiled = hbs`hello`;"
@@ -406,11 +409,18 @@ describe('htmlbars-inline-precompile', function () {
   });
 
   it('does not fully remove imports that have other imports', function () {
-    plugins[0][1].modules = {
-      precompile1: 'default',
-      precompile2: 'hbs',
-      precompile3: 'hbs',
-    };
+    plugins = [
+      [
+        HTMLBarsInlinePrecompile,
+        buildOptions({
+          modules: {
+            precompile1: 'default',
+            precompile2: 'hbs',
+            precompile3: 'hbs',
+          },
+        }),
+      ],
+    ];
 
     let transformed = transform(`
       import hbs, { foo } from 'precompile1';
@@ -451,20 +461,14 @@ describe('htmlbars-inline-precompile', function () {
     plugins = [
       [
         HTMLBarsInlinePrecompile,
-        {
-          precompile() {
-            return precompile.apply(this, arguments);
-          },
-
-          ensureModuleApiPolyfill: false,
-
+        buildOptions({
           modules: {
             'ember-cli-htmlbars': 'hbs',
             '@ember/template-compilation': {
               export: 'precompileTemplate',
             },
           },
-        },
+        }),
       ],
     ];
 
@@ -496,20 +500,14 @@ describe('htmlbars-inline-precompile', function () {
     plugins = [
       [
         HTMLBarsInlinePrecompile,
-        {
-          precompile() {
-            return precompile.apply(this, arguments);
-          },
-
-          ensureModuleApiPolyfill: false,
-
+        buildOptions({
           modules: {
             '@ember/template-compilation': {
               export: 'precompileTemplate',
               disableTemplateLiteral: true,
             },
           },
-        },
+        }),
       ],
     ];
 
@@ -527,20 +525,14 @@ describe('htmlbars-inline-precompile', function () {
     plugins = [
       [
         HTMLBarsInlinePrecompile,
-        {
-          precompile() {
-            return precompile.apply(this, arguments);
-          },
-
-          ensureModuleApiPolyfill: false,
-
+        buildOptions({
           modules: {
             'ember-template-imports': {
               export: 'hbs',
               disableFunctionCall: true,
             },
           },
-        },
+        }),
       ],
     ];
 
@@ -675,10 +667,8 @@ describe('htmlbars-inline-precompile', function () {
       'import hbs from "htmlbars-inline-precompile";\nvar compiled = anotherTag`hello`;'
     );
 
-    expect(transformed).toEqual(
-      'var compiled = anotherTag`hello`;',
-      'other tagged template strings are not touched'
-    );
+    // other tagged template strings are not touched
+    expect(transformed).toEqual('var compiled = anotherTag`hello`;');
   });
 
   it('warns when the tagged template string contains placeholders', function () {
@@ -763,53 +753,10 @@ describe('htmlbars-inline-precompile', function () {
         transform("import hbs from 'htmlbars-inline-precompile';\nvar compiled = hbs();")
       ).toThrow(/hbs should be invoked with at least a single argument: the template string/);
     });
-
-    it('works with babel-plugin-ember-modules-api-polyfill', function () {
-      plugins.push('babel-plugin-ember-modules-api-polyfill');
-
-      precompile = (template) => {
-        return `function() { return "${template}"; }`;
-      };
-
-      let transpiled = transform(
-        "import hbs from 'htmlbars-inline-precompile';\nvar compiled = hbs`hello`;"
-      );
-
-      expect(transpiled).toMatchInlineSnapshot(`
-        "var compiled = Ember.HTMLBars.template(
-        /*
-          hello
-        */
-        function () {
-          return \\"hello\\";
-        });"
-      `);
-    });
-
-    it('works with ensureModuleApiPolyfill', function () {
-      plugins[0][1].ensureModuleApiPolyfill = true;
-
-      precompile = (template) => {
-        return `function() { return "${template}"; }`;
-      };
-
-      let transpiled = transform(
-        "import hbs from 'htmlbars-inline-precompile';\nvar compiled = hbs`hello`;"
-      );
-
-      expect(transpiled).toMatchInlineSnapshot(`
-        "var compiled = Ember.HTMLBars.template(
-        /*
-          hello
-        */
-        function () {
-          return \\"hello\\";
-        });"
-      `);
-    });
   });
 
   describe('with ember-source', function () {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const compiler = require('ember-source/dist/ember-template-compiler');
 
     beforeEach(function () {
@@ -835,12 +782,8 @@ describe('htmlbars-inline-precompile', function () {
         [
           HTMLBarsInlinePrecompile,
           {
-            precompile() {
-              return precompile.apply(this, arguments);
-            },
-
+            precompile,
             ensureModuleApiPolyfill: false,
-
             modules: {
               '@ember/template-compilation': {
                 export: 'precompileTemplate',
