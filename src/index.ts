@@ -4,37 +4,93 @@ import type * as Babel from '@babel/core';
 import type { types as t } from '@babel/core';
 import { resolve } from 'path';
 
+type LegacyModuleName =
+  | 'ember-cli-htmlbars'
+  | 'ember-cli-htmlbars-inline-precompile'
+  | 'htmlbars-inline-precompile';
+
+type ModuleName = LegacyModuleName | '@ember/template-compilation';
+
+interface ModuleConfig {
+  moduleName: ModuleName;
+  export: string;
+  allowTemplateLiteral: boolean;
+  enableScope: boolean;
+}
+
+const INLINE_PRECOMPILE_MODULES: ModuleConfig[] = [
+  {
+    moduleName: 'ember-cli-htmlbars',
+    export: 'hbs',
+    allowTemplateLiteral: true,
+    enableScope: false,
+  },
+  {
+    moduleName: 'ember-cli-htmlbars-inline-precompile',
+    export: 'default',
+    allowTemplateLiteral: true,
+    enableScope: false,
+  },
+  {
+    moduleName: 'htmlbars-inline-precompile',
+    export: 'default',
+    allowTemplateLiteral: true,
+    enableScope: false,
+  },
+  {
+    moduleName: '@ember/template-compilation',
+    export: 'precompileTemplate',
+    allowTemplateLiteral: false,
+    enableScope: true,
+  },
+];
+
 export interface Options {
+  // The on-disk path to your copy of Ember's ember-template-compiler.js. You
+  // need either this or `precompile`.
   templateCompilerPath?: string;
+
+  // The precompile function proided by Ember's template compiler. You need
+  // either this or `templateCompilerPath`.
   precompile?: typeof glimmerPrecompile;
-  moduleOverrides?: Record<string, Record<string, string>>;
-  modules?: {
-    [importPath: string]: string | ModuleOptions;
-  };
+
+  // Allows you to remap what imports will be emitted in our compiled output. By
+  // example:
+  //
+  //   outputModuleOverrides: {
+  //     '@ember/template-factory': {
+  //       createTemplateFactory: ['createTemplateFactory', '@glimmer/core'],
+  //     }
+  //   }
+  //
+  // Normal Ember apps shouldn't need this, it exists to support other
+  // environments like standalone GlimmerJS
+  outputModuleOverrides?: Record<string, Record<string, [string, string]>>;
+
+  // By default, this plugin implements only Ember's stable public API for
+  // template compilation, which is:
+  //
+  //    import { precompileTemplate } from '@ember/template-compilation';
+  //
+  // But historically there are several other importable syntaxes in widespread
+  // use, and we can enable those too by including their module names in this
+  // list.
+  enableLegacyModules?: LegacyModuleName[];
+
+  // This should be true for production builds so that we can pass it onward to
+  // Ember's template compiler, so it leaves out debug information.
   isProduction?: boolean;
 }
 
 interface State {
   opts: Options;
-  presentModules: Map<string, ExtendedModuleOptions>;
+  presentModules: Map<string, ModuleConfig>;
   allAddedImports: Record<
     string,
     Record<string, { id: t.Identifier; path?: NodePath<t.ImportDeclaration> }>
   >;
   programPath: NodePath<t.Program>;
 }
-
-interface ModuleOptions {
-  export: string;
-  shouldParseScope?: boolean;
-  disableTemplateLiteral?: boolean;
-  disableFunctionCall?: boolean;
-}
-
-type ExtendedModuleOptions = ModuleOptions & {
-  modulePath: string;
-  originalName: string;
-};
 
 interface CompilerOptions {
   isProduction?: boolean;
@@ -231,7 +287,7 @@ export default function htmlbarsInlinePrecompile(babel: typeof Babel) {
   }
 
   function ensureImport(exportName: string, moduleName: string, state: State): t.Identifier {
-    let moduleOverrides = state.opts.moduleOverrides;
+    let moduleOverrides = state.opts.outputModuleOverrides;
 
     let addedImports = (state.allAddedImports[moduleName] =
       state.allAddedImports[moduleName] || {});
@@ -311,34 +367,24 @@ export default function htmlbarsInlinePrecompile(babel: typeof Babel) {
 
         state.allAddedImports = Object.create(null);
 
-        // Setup other module options and create cache for values
-        let modules = state.opts.modules || {
-          'htmlbars-inline-precompile': { export: 'default', shouldParseScope: false },
-        };
-
         let presentModules: State['presentModules'] = new Map();
         let importDeclarations = path
           .get('body')
           .filter((n) => n.type === 'ImportDeclaration') as NodePath<t.ImportDeclaration>[];
 
-        for (let module in modules) {
+        for (let moduleConfig of INLINE_PRECOMPILE_MODULES) {
+          if (
+            moduleConfig.moduleName !== '@ember/template-compilation' &&
+            !state.opts.enableLegacyModules?.includes(moduleConfig.moduleName)
+          ) {
+            continue;
+          }
           let paths = importDeclarations.filter(
-            (path) => !path.removed && path.node.source.value === module
+            (path) => !path.removed && path.node.source.value === moduleConfig.moduleName
           );
 
           for (let path of paths) {
-            let userOptions = modules[module];
-            let copiedOptions: ModuleOptions;
-
-            if (typeof userOptions === 'string') {
-              // Normalize 'moduleName': 'importSpecifier'
-              copiedOptions = { export: userOptions };
-            } else {
-              // else clone options so we don't mutate it
-              copiedOptions = Object.assign({}, userOptions);
-            }
-
-            let modulePathExport = copiedOptions.export;
+            let modulePathExport = moduleConfig.export;
             let importSpecifierPath = path
               .get('specifiers')
               .find(({ node }) =>
@@ -350,11 +396,6 @@ export default function htmlbarsInlinePrecompile(babel: typeof Babel) {
             if (importSpecifierPath) {
               let localName = importSpecifierPath.node.local.name;
 
-              // TODO: ???
-              let localImportId = path.scope.generateUidIdentifierBasedOnNode(path.node);
-
-              path.scope.rename(localName, localImportId.name);
-
               // If it was the only specifier, remove the whole import, else
               // remove the specifier
               if (path.node.specifiers.length === 1) {
@@ -362,13 +403,7 @@ export default function htmlbarsInlinePrecompile(babel: typeof Babel) {
               } else {
                 importSpecifierPath.remove();
               }
-              presentModules.set(
-                localImportId.name,
-                Object.assign(copiedOptions, {
-                  modulePath: module,
-                  originalName: localName,
-                })
-              );
+              presentModules.set(localName, moduleConfig);
             }
           }
         }
@@ -379,17 +414,19 @@ export default function htmlbarsInlinePrecompile(babel: typeof Babel) {
       TaggedTemplateExpression(path: NodePath<t.TaggedTemplateExpression>, state: State) {
         let tagPath = path.get('tag');
         let options;
-        if (tagPath.isIdentifier()) {
-          options = state.presentModules.get(tagPath.node.name);
+        if (!tagPath.isIdentifier()) {
+          return;
         }
+
+        options = state.presentModules.get(tagPath.node.name);
 
         if (!options) {
           return;
         }
 
-        if (options.disableTemplateLiteral) {
+        if (!options.allowTemplateLiteral) {
           throw path.buildCodeFrameError(
-            `Attempted to use \`${options.originalName}\` as a template tag, but it can only be called as a function with a string passed to it: ${options.originalName}('content here')`
+            `Attempted to use \`${tagPath.node.name}\` as a template tag, but it can only be called as a function with a string passed to it: ${tagPath.node.name}('content here')`
           );
         }
 
@@ -423,18 +460,12 @@ export default function htmlbarsInlinePrecompile(babel: typeof Babel) {
       CallExpression(path: NodePath<t.CallExpression>, state: State) {
         let calleePath = path.get('callee');
         let options;
-        if (calleePath.isIdentifier()) {
-          options = state.presentModules.get(calleePath.node.name);
-        }
-
-        if (!options) {
+        if (!calleePath.isIdentifier()) {
           return;
         }
-
-        if (options.disableFunctionCall) {
-          throw path.buildCodeFrameError(
-            `Attempted to use \`${options.originalName}\` as a function call, but it can only be used as a template tag: ${options.originalName}\`content here\``
-          );
+        options = state.presentModules.get(calleePath.node.name);
+        if (!options) {
+          return;
         }
 
         let [firstArg, secondArg, ...restArgs] = path.get('arguments');
@@ -456,11 +487,11 @@ export default function htmlbarsInlinePrecompile(babel: typeof Babel) {
             break;
           case 'TaggedTemplateExpression':
             throw path.buildCodeFrameError(
-              `tagged template strings inside ${options.originalName} are not supported`
+              `tagged template strings inside ${calleePath.node.name} are not supported`
             );
           default:
             throw path.buildCodeFrameError(
-              'hbs should be invoked with at least a single argument: the template string'
+              `${calleePath.node.name} should be invoked with at least a single argument (the template string)`
             );
         }
 
@@ -471,15 +502,15 @@ export default function htmlbarsInlinePrecompile(babel: typeof Babel) {
         } else {
           if (!secondArg.isObjectExpression()) {
             throw path.buildCodeFrameError(
-              'hbs can only be invoked with 2 arguments: the template string, and any static options'
+              `${calleePath.node.name} can only be invoked with 2 arguments: the template string, and any static options`
             );
           }
 
-          compilerOptions = parseObjectExpression(options.originalName, secondArg, true);
+          compilerOptions = parseObjectExpression(calleePath.node.name, secondArg, true);
         }
         if (restArgs.length > 0) {
           throw path.buildCodeFrameError(
-            'hbs can only be invoked with 2 arguments: the template string, and any static options'
+            `${calleePath.node.name} can only be invoked with 2 arguments: the template string, and any static options`
           );
         }
 
