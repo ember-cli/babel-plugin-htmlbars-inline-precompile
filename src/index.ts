@@ -335,7 +335,7 @@ export default function htmlbarsInlinePrecompile(babel: typeof Babel) {
           : t.importSpecifier(uid, t.identifier(exportName));
 
       let newImport = t.importDeclaration([newImportSpecifier], t.stringLiteral(moduleName));
-      (state.programPath as any).unshiftContainer('body', newImport); // TODO
+      state.programPath.unshiftContainer('body', newImport);
       state.programPath.scope.registerBinding(
         'module',
         state.programPath.get('body.0.specifiers.0') as NodePath
