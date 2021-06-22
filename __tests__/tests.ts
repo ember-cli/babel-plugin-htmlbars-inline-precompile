@@ -68,7 +68,7 @@ describe('htmlbars-inline-precompile', function () {
     plugins = [
       [
         HTMLBarsInlinePrecompile,
-        buildOptions({ templateCompilerPath: require.resolve('./mock-precompile') }),
+        buildOptions({ precompilerPath: require.resolve('./mock-precompile') }),
       ],
     ];
 
@@ -98,39 +98,8 @@ describe('htmlbars-inline-precompile', function () {
     });
   });
 
-  it('passes through isProduction option when used as a call expression', function () {
-    let source = 'hello';
-
-    plugins = [
-      [
-        HTMLBarsInlinePrecompile,
-        buildOptions({
-          isProduction: true,
-        }),
-      ],
-    ];
-
-    transform(
-      `import { precompileTemplate } from '@ember/template-compilation';\nvar compiled = precompileTemplate('${source}');`
-    );
-
-    expect(optionsReceived).toEqual({
-      contents: source,
-      isProduction: true,
-    });
-  });
-
   it('uses the user provided isProduction option if present', function () {
     let source = 'hello';
-
-    plugins = [
-      [
-        HTMLBarsInlinePrecompile,
-        buildOptions({
-          isProduction: false,
-        }),
-      ],
-    ];
 
     transform(
       `import { precompileTemplate } from '@ember/template-compilation';\nvar compiled = precompileTemplate('${source}', { isProduction: true });`
@@ -139,29 +108,6 @@ describe('htmlbars-inline-precompile', function () {
     expect(optionsReceived).toEqual({
       contents: source,
       isProduction: true,
-    });
-  });
-
-  it('passes through isProduction option when used as a TaggedTemplateExpression', function () {
-    let source = 'hello';
-
-    plugins = [
-      [
-        HTMLBarsInlinePrecompile,
-        buildOptions({
-          isProduction: true,
-          enableLegacyModules: ['htmlbars-inline-precompile'],
-        }),
-      ],
-    ];
-
-    transform(`import hbs from 'htmlbars-inline-precompile';\nvar compiled = hbs\`${source}\`;`);
-
-    expect(optionsReceived).toEqual({
-      contents: source,
-      isProduction: true,
-      locals: null,
-      strictMode: false,
     });
   });
 
@@ -302,9 +248,6 @@ describe('htmlbars-inline-precompile', function () {
 
     expect(optionsReceived).toEqual({
       contents: source,
-      isProduction: undefined,
-      locals: null,
-      strictMode: false,
     });
   });
 

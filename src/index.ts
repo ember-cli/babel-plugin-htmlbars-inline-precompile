@@ -1,8 +1,9 @@
 import type { NodePath } from '@babel/traverse';
-import type { precompile as glimmerPrecompile } from '@glimmer/compiler';
 import type * as Babel from '@babel/core';
 import type { types as t } from '@babel/core';
 import { resolve } from 'path';
+
+type EmberPrecompile = (templateString: string, options: Record<string, unknown>) => string;
 
 type LegacyModuleName =
   | 'ember-cli-htmlbars'
@@ -46,13 +47,20 @@ const INLINE_PRECOMPILE_MODULES: ModuleConfig[] = [
 ];
 
 export interface Options {
-  // The on-disk path to your copy of Ember's ember-template-compiler.js. You
-  // need either this or `precompile`.
-  templateCompilerPath?: string;
+  // The on-disk path to a module that provides a `precompile` function as
+  // defined below. You need to either set `precompilePath` or set `precompile`.
+  precompilerPath?: string;
 
-  // The precompile function proided by Ember's template compiler. You need
-  // either this or `templateCompilerPath`.
-  precompile?: typeof glimmerPrecompile;
+  // A precompile function that invokes Ember's template compiler.
+  //
+  // Options handling rules:
+  //
+  //  - we add `content`, which is the original string form of the template
+  //  - we have special parsing for `scope` which becomes `locals` when passed
+  //    to your precompile
+  //  - anything else the user passes to `precompileTemplate` will be passed
+  //    through to your `precompile`.
+  precompile?: EmberPrecompile;
 
   // Allows you to remap what imports will be emitted in our compiled output. By
   // example:
@@ -76,10 +84,6 @@ export interface Options {
   // use, and we can enable those too by including their module names in this
   // list.
   enableLegacyModules?: LegacyModuleName[];
-
-  // This should be true for production builds so that we can pass it onward to
-  // Ember's template compiler, so it leaves out debug information.
-  isProduction?: boolean;
 }
 
 interface State {
@@ -90,13 +94,6 @@ interface State {
     Record<string, { id: t.Identifier; path?: NodePath<t.ImportDeclaration> }>
   >;
   programPath: NodePath<t.Program>;
-}
-
-interface CompilerOptions {
-  isProduction?: boolean;
-  strictMode?: boolean;
-  locals?: string[] | null;
-  insertRuntimeErrors?: boolean;
 }
 
 export default function htmlbarsInlinePrecompile(babel: typeof Babel) {
@@ -250,23 +247,23 @@ export default function htmlbarsInlinePrecompile(babel: typeof Babel) {
   }
 
   function compileTemplate(
-    precompile: typeof glimmerPrecompile,
+    precompile: EmberPrecompile,
     template: string,
     templateCompilerIdentifier: t.Identifier,
-    _options: CompilerOptions
+    userTypedOptions: Record<string, unknown>
   ) {
-    let options = Object.assign({ contents: template }, _options);
+    let options = Object.assign({ contents: template }, userTypedOptions);
 
     let precompileResultString: string;
 
     if (options.insertRuntimeErrors) {
       try {
-        precompileResultString = precompile(template, options as any); // TODO
+        precompileResultString = precompile(template, options);
       } catch (error) {
         return runtimeErrorIIFE({ ERROR_MESSAGE: error.message });
       }
     } else {
-      precompileResultString = precompile(template, options as any); // TODO
+      precompileResultString = precompile(template, options);
     }
 
     let precompileResultAST = babel.parse(
@@ -350,17 +347,17 @@ export default function htmlbarsInlinePrecompile(babel: typeof Babel) {
     return t.identifier(addedImports[exportName].id.name);
   }
 
-  let precompile: typeof glimmerPrecompile;
+  let precompile: EmberPrecompile;
 
   return {
     visitor: {
       Program(path: NodePath<t.Program>, state: State) {
         state.programPath = path;
 
-        if (state.opts.templateCompilerPath) {
+        if (state.opts.precompilerPath) {
           // eslint-disable-next-line @typescript-eslint/no-var-requires
-          let templateCompiler: any = require(state.opts.templateCompilerPath);
-          precompile = templateCompiler.precompile;
+          let mod: any = require(state.opts.precompilerPath);
+          precompile = mod.precompile;
         } else if (state.opts.precompile) {
           precompile = state.opts.precompile;
         }
@@ -438,23 +435,13 @@ export default function htmlbarsInlinePrecompile(babel: typeof Babel) {
 
         let template = path.node.quasi.quasis.map((quasi) => quasi.value.cooked).join('');
 
-        let { isProduction } = state.opts;
-        let locals = null;
-        let strictMode = false;
-
         let emberIdentifier = ensureImport(
           'createTemplateFactory',
           '@ember/template-factory',
           state
         );
 
-        path.replaceWith(
-          compileTemplate(precompile, template, emberIdentifier, {
-            isProduction,
-            locals,
-            strictMode,
-          })
-        );
+        path.replaceWith(compileTemplate(precompile, template, emberIdentifier, {}));
       },
 
       CallExpression(path: NodePath<t.CallExpression>, state: State) {
@@ -495,10 +482,10 @@ export default function htmlbarsInlinePrecompile(babel: typeof Babel) {
             );
         }
 
-        let compilerOptions: CompilerOptions;
+        let userTypedOptions: Record<string, unknown>;
 
         if (!secondArg) {
-          compilerOptions = {};
+          userTypedOptions = {};
         } else {
           if (!secondArg.isObjectExpression()) {
             throw path.buildCodeFrameError(
@@ -506,7 +493,7 @@ export default function htmlbarsInlinePrecompile(babel: typeof Babel) {
             );
           }
 
-          compilerOptions = parseObjectExpression(calleePath.node.name, secondArg, true);
+          userTypedOptions = parseObjectExpression(calleePath.node.name, secondArg, true);
         }
         if (restArgs.length > 0) {
           throw path.buildCodeFrameError(
@@ -514,19 +501,12 @@ export default function htmlbarsInlinePrecompile(babel: typeof Babel) {
           );
         }
 
-        let { isProduction } = state.opts;
-
-        // allow the user specified value to "win" over ours
-        if (!('isProduction' in compilerOptions)) {
-          compilerOptions.isProduction = isProduction;
-        }
-
         path.replaceWith(
           compileTemplate(
             precompile,
             template,
             ensureImport('createTemplateFactory', '@ember/template-factory', state),
-            compilerOptions
+            userTypedOptions
           )
         );
       },
