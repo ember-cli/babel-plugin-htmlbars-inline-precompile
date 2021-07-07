@@ -52,9 +52,8 @@ describe('htmlbars-inline-precompile', function () {
     );
 
     expect(transpiled).toMatchInlineSnapshot(`
-      "import { createTemplateFactory as _createTemplateFactory } from \\"@ember/template-factory\\";
-
-      var compiled = _createTemplateFactory(
+      "import { createTemplateFactory } from \\"@ember/template-factory\\";
+      var compiled = createTemplateFactory(
       /*
         hello
       */
@@ -77,9 +76,8 @@ describe('htmlbars-inline-precompile', function () {
     );
 
     expect(transpiled).toMatchInlineSnapshot(`
-      "import { createTemplateFactory as _createTemplateFactory } from \\"@ember/template-factory\\";
-
-      var compiled = _createTemplateFactory(
+      "import { createTemplateFactory } from \\"@ember/template-factory\\";
+      var compiled = createTemplateFactory(
       /*
         hello
       */
@@ -173,10 +171,10 @@ describe('htmlbars-inline-precompile', function () {
     `);
 
     expect(transformed).toEqual(stripIndent`
-      import { createTemplateFactory as _createTemplateFactory } from "@ember/template-factory";
+      import { createTemplateFactory } from "@ember/template-factory";
 
       if ('foo') {
-        const template = _createTemplateFactory(
+        const template = createTemplateFactory(
         /*
           hello
         */
@@ -195,7 +193,7 @@ describe('htmlbars-inline-precompile', function () {
     );
 
     expect(transformed).toMatchInlineSnapshot(`
-      "import { createTemplateFactory as _createTemplateFactory } from \\"@ember/template-factory\\";
+      "import { createTemplateFactory } from \\"@ember/template-factory\\";
 
       var compiled = function () {
         throw new Error(\\"NOOOOOOOOOOOOOOOOOOOOOO\\");
@@ -221,10 +219,10 @@ describe('htmlbars-inline-precompile', function () {
     `);
 
     expect(transformed).toEqual(stripIndent`
-      import { createTemplateFactory as _createTemplateFactory } from "@ember/template-factory";
+      import { createTemplateFactory } from "@ember/template-factory";
 
       if ('foo') {
-        const template = _createTemplateFactory(
+        const template = createTemplateFactory(
         /*
           hello *\\/
         */
@@ -274,9 +272,8 @@ describe('htmlbars-inline-precompile', function () {
     );
 
     expect(transformed).toMatchInlineSnapshot(`
-      "import { createTemplateFactory as _createTemplateFactory } from \\"@ember/template-factory\\";
-
-      var compiled = _createTemplateFactory(
+      "import { createTemplateFactory } from \\"@ember/template-factory\\";
+      var compiled = createTemplateFactory(
       /*
         hello
       */
@@ -299,9 +296,8 @@ describe('htmlbars-inline-precompile', function () {
     );
 
     expect(transformed).toMatchInlineSnapshot(`
-      "import { createTemplateFactory as _createTemplateFactory } from \\"@ember/template-factory\\";
-
-      var compiled = _createTemplateFactory(
+      "import { createTemplateFactory } from \\"@ember/template-factory\\";
+      var compiled = createTemplateFactory(
       /*
         hello
       */
@@ -334,15 +330,13 @@ describe('htmlbars-inline-precompile', function () {
     `);
 
     expect(transformed).toMatchInlineSnapshot(`
-      "import { createTemplateFactory as _createTemplateFactory } from \\"@ember/template-factory\\";
-
-      let a = _createTemplateFactory(
+      "import { createTemplateFactory } from \\"@ember/template-factory\\";
+      let a = createTemplateFactory(
       /*
         hello
       */
       \\"precompiled(hello)\\");
-
-      let b = _createTemplateFactory(
+      let b = createTemplateFactory(
       /*
         hello
       */
@@ -416,7 +410,7 @@ describe('htmlbars-inline-precompile', function () {
     );
 
     expect(transformed).toMatchInlineSnapshot(`
-      "define([\\"@ember/template-factory\\"], function (_templateFactory) {
+      "define([\\"@ember/template-factory\\", \\"@ember/template-compilation\\"], function (_templateFactory, _templateCompilation) {
         \\"use strict\\";
 
         var compiled = (0, _templateFactory.createTemplateFactory)(
@@ -435,9 +429,8 @@ describe('htmlbars-inline-precompile', function () {
     );
 
     expect(transformed).toMatchInlineSnapshot(`
-      "import { createTemplateFactory as _createTemplateFactory } from \\"@ember/template-factory\\";
-
-      var compiled = _createTemplateFactory(
+      "import { createTemplateFactory } from \\"@ember/template-factory\\";
+      var compiled = createTemplateFactory(
       /*
         some emoji goes 💥
       */
@@ -461,9 +454,8 @@ describe('htmlbars-inline-precompile', function () {
     );
 
     expect(transformed).toMatchInlineSnapshot(`
-      "import { createTemplateFactory as _createTemplateFactory } from \\"@ember/template-factory\\";
-
-      var compiled = _createTemplateFactory(
+      "import { createTemplateFactory } from \\"@ember/template-factory\\";
+      var compiled = createTemplateFactory(
       /*
         hello
       */
@@ -520,14 +512,12 @@ describe('htmlbars-inline-precompile', function () {
 
     let transformed = transform(stripIndent`
       import { precompileTemplate } from '@ember/template-compilation';
-
       const template = precompileTemplate('hello');
     `);
 
     expect(transformed).toEqual(stripIndent`
-      import { createTemplateFactory as _createTemplateFactory } from "@glimmer/core";
-
-      const template = _createTemplateFactory(
+      import { createTemplateFactory } from "@glimmer/core";
+      const template = createTemplateFactory(
       /*
         hello
       */
