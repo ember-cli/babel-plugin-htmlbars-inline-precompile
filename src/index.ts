@@ -1,4 +1,4 @@
-import type { NodePath } from '@babel/traverse';
+import type { NodePath, Scope } from '@babel/traverse';
 import type * as Babel from '@babel/core';
 import type { types as t } from '@babel/core';
 import { resolve } from 'path';
@@ -322,8 +322,10 @@ export default function htmlbarsInlinePrecompile(babel: typeof Babel) {
     }
 
     if (!addedImports[exportName]) {
-      let uid = state.programPath.scope.generateUidIdentifier(
-        exportName === 'default' ? moduleName : exportName
+      let uid = unusedNameLike(
+        state.programPath.scope,
+        exportName === 'default' ? moduleName : exportName,
+        t
       );
 
       let newImportSpecifier =
@@ -528,4 +530,11 @@ function name(node: t.StringLiteral | t.Identifier): string {
   } else {
     return node.name;
   }
+}
+
+function unusedNameLike(scope: Scope, name: string, t: typeof Babel.types): t.Identifier {
+  if (/^[a-zA-Z]+$/.test(name) && !scope.hasBinding(name)) {
+    return t.identifier(name);
+  }
+  return scope.generateUidIdentifier(name);
 }
