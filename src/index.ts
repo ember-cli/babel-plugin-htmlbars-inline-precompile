@@ -88,7 +88,6 @@ export interface Options {
 
 interface State {
   opts: Options;
-  presentModules: Map<string, ModuleConfig>;
   allAddedImports: Record<
     string,
     Record<string, { id: t.Identifier; path?: NodePath<t.ImportDeclaration> }>
@@ -353,72 +352,32 @@ export default function htmlbarsInlinePrecompile(babel: typeof Babel) {
 
   return {
     visitor: {
-      Program(path: NodePath<t.Program>, state: State) {
-        state.programPath = path;
+      Program: {
+        enter(path: NodePath<t.Program>, state: State) {
+          state.programPath = path;
 
-        if (state.opts.precompilerPath) {
-          // eslint-disable-next-line @typescript-eslint/no-var-requires
-          let mod: any = require(state.opts.precompilerPath);
-          precompile = mod.precompile;
-        } else if (state.opts.precompile) {
-          precompile = state.opts.precompile;
-        }
-
-        state.allAddedImports = Object.create(null);
-
-        let presentModules: State['presentModules'] = new Map();
-        let importDeclarations = path
-          .get('body')
-          .filter((n) => n.type === 'ImportDeclaration') as NodePath<t.ImportDeclaration>[];
-
-        for (let moduleConfig of INLINE_PRECOMPILE_MODULES) {
-          if (
-            moduleConfig.moduleName !== '@ember/template-compilation' &&
-            !state.opts.enableLegacyModules?.includes(moduleConfig.moduleName)
-          ) {
-            continue;
+          if (state.opts.precompilerPath) {
+            // eslint-disable-next-line @typescript-eslint/no-var-requires
+            let mod: any = require(state.opts.precompilerPath);
+            precompile = mod.precompile;
+          } else if (state.opts.precompile) {
+            precompile = state.opts.precompile;
           }
-          let paths = importDeclarations.filter(
-            (path) => !path.removed && path.node.source.value === moduleConfig.moduleName
-          );
 
-          for (let path of paths) {
-            let modulePathExport = moduleConfig.export;
-            let importSpecifierPath = path
-              .get('specifiers')
-              .find(({ node }) =>
-                modulePathExport === 'default'
-                  ? t.isImportDefaultSpecifier(node)
-                  : t.isImportSpecifier(node) && name(node.imported) === modulePathExport
-              );
-
-            if (importSpecifierPath) {
-              let localName = importSpecifierPath.node.local.name;
-
-              // If it was the only specifier, remove the whole import, else
-              // remove the specifier
-              if (path.node.specifiers.length === 1) {
-                path.remove();
-              } else {
-                importSpecifierPath.remove();
-              }
-              presentModules.set(localName, moduleConfig);
-            }
-          }
-        }
-
-        state.presentModules = presentModules;
+          state.allAddedImports = Object.create(null);
+        },
+        exit(path: NodePath<t.Program>, state: State) {
+          pruneImports(path, state);
+        },
       },
 
       TaggedTemplateExpression(path: NodePath<t.TaggedTemplateExpression>, state: State) {
         let tagPath = path.get('tag');
-        let options;
+
         if (!tagPath.isIdentifier()) {
           return;
         }
-
-        options = state.presentModules.get(tagPath.node.name);
-
+        let options = referencesInlineCompiler(tagPath, state);
         if (!options) {
           return;
         }
@@ -448,11 +407,11 @@ export default function htmlbarsInlinePrecompile(babel: typeof Babel) {
 
       CallExpression(path: NodePath<t.CallExpression>, state: State) {
         let calleePath = path.get('callee');
-        let options;
+
         if (!calleePath.isIdentifier()) {
           return;
         }
-        options = state.presentModules.get(calleePath.node.name);
+        let options = referencesInlineCompiler(calleePath, state);
         if (!options) {
           return;
         }
@@ -537,4 +496,55 @@ function unusedNameLike(scope: Scope, name: string, t: typeof Babel.types): t.Id
     return t.identifier(name);
   }
   return scope.generateUidIdentifier(name);
+}
+
+function* configuredModules(state: State) {
+  for (let moduleConfig of INLINE_PRECOMPILE_MODULES) {
+    if (
+      moduleConfig.moduleName !== '@ember/template-compilation' &&
+      !state.opts.enableLegacyModules?.includes(moduleConfig.moduleName)
+    ) {
+      continue;
+    }
+    yield moduleConfig;
+  }
+}
+
+function referencesInlineCompiler(
+  path: NodePath<t.Identifier>,
+  state: State
+): ModuleConfig | undefined {
+  for (let moduleConfig of configuredModules(state)) {
+    if (path.referencesImport(moduleConfig.moduleName, moduleConfig.export)) {
+      return moduleConfig;
+    }
+  }
+  return undefined;
+}
+
+function pruneImports(path: NodePath<t.Program>, state: State) {
+  for (let topLevelPath of path.get('body')) {
+    if (topLevelPath.isImportDeclaration()) {
+      let modulePath = topLevelPath.get('source').node.value;
+      for (let moduleConfig of configuredModules(state)) {
+        if (moduleConfig.moduleName === modulePath) {
+          let importSpecifierPath = topLevelPath
+            .get('specifiers')
+            .find((specifierPath) =>
+              moduleConfig.export === 'default'
+                ? specifierPath.isImportDefaultSpecifier()
+                : specifierPath.isImportSpecifier() &&
+                  name(specifierPath.node.imported) === moduleConfig.export
+            );
+          if (importSpecifierPath) {
+            if (topLevelPath.node.specifiers.length === 1) {
+              topLevelPath.remove();
+            } else {
+              importSpecifierPath.remove();
+            }
+          }
+        }
+      }
+    }
+  }
 }
