@@ -21,9 +21,12 @@
   },
   "main": "src/index.js",
   "files": [
-    "src/**/*.js"
+    "src/**/*.js",
+    "src/**/*.d.ts",
+    "src/**/*.js.map"
   ],
   "dependencies": {
+    "babel-import-util": "^0.1.0",
     "line-column": "^1.0.2",
     "magic-string": "^0.25.7",
     "string.prototype.matchall": "^4.0.5"

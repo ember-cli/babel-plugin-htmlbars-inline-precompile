@@ -1,7 +1,8 @@
-import type { NodePath, Scope } from '@babel/traverse';
+import type { NodePath } from '@babel/traverse';
 import type * as Babel from '@babel/core';
 import type { types as t } from '@babel/core';
 import { resolve } from 'path';
+import { ImportUtil } from 'babel-import-util';
 
 type EmberPrecompile = (templateString: string, options: Record<string, unknown>) => string;
 
@@ -88,11 +89,7 @@ export interface Options {
 
 interface State {
   opts: Options;
-  allAddedImports: Record<
-    string,
-    Record<string, { id: t.Identifier; path?: NodePath<t.ImportDeclaration> }>
-  >;
-  programPath: NodePath<t.Program>;
+  util: ImportUtil;
 }
 
 export default function htmlbarsInlinePrecompile(babel: typeof Babel) {
@@ -282,14 +279,13 @@ export default function htmlbarsInlinePrecompile(babel: typeof Babel) {
     return t.callExpression(templateCompilerIdentifier, [templateExpression!]);
   }
 
-  function ensureImport(exportName: string, moduleName: string, state: State): t.Identifier {
+  function ensureImport(
+    target: NodePath<t.Node>,
+    moduleName: string,
+    exportName: string,
+    state: State
+  ): t.Identifier {
     let moduleOverrides = state.opts.outputModuleOverrides;
-
-    let addedImports = (state.allAddedImports[moduleName] =
-      state.allAddedImports[moduleName] || {});
-
-    if (addedImports[exportName]) return t.identifier(addedImports[exportName].id.name);
-
     if (moduleOverrides) {
       let glimmerModule = moduleOverrides[moduleName];
       let glimmerExport = glimmerModule?.[exportName];
@@ -299,53 +295,7 @@ export default function htmlbarsInlinePrecompile(babel: typeof Babel) {
         moduleName = glimmerExport[1];
       }
     }
-
-    let importDeclarations = state.programPath
-      .get('body')
-      .filter((n) => n.type === 'ImportDeclaration') as NodePath<t.ImportDeclaration>[];
-
-    let preexistingImportDeclaration = importDeclarations.find(
-      (n) => n.node.source.value === moduleName
-    );
-
-    if (preexistingImportDeclaration) {
-      let importSpecifier = preexistingImportDeclaration.get('specifiers').find(({ node }) => {
-        return exportName === 'default'
-          ? t.isImportDefaultSpecifier(node)
-          : 'imported' in node && name(node.imported) === exportName;
-      });
-
-      if (importSpecifier) {
-        addedImports[exportName] = { id: importSpecifier.node.local };
-      }
-    }
-
-    if (!addedImports[exportName]) {
-      let uid = unusedNameLike(
-        state.programPath.scope,
-        exportName === 'default' ? moduleName : exportName,
-        t
-      );
-
-      let newImportSpecifier =
-        exportName === 'default'
-          ? t.importDefaultSpecifier(uid)
-          : t.importSpecifier(uid, t.identifier(exportName));
-
-      let newImport = t.importDeclaration([newImportSpecifier], t.stringLiteral(moduleName));
-      state.programPath.unshiftContainer('body', newImport);
-      state.programPath.scope.registerBinding(
-        'module',
-        state.programPath.get('body.0.specifiers.0') as NodePath
-      );
-
-      addedImports[exportName] = {
-        id: uid,
-        path: state.programPath.get('body.0') as NodePath<t.ImportDeclaration>,
-      };
-    }
-
-    return t.identifier(addedImports[exportName].id.name);
+    return state.util.import(target, moduleName, exportName);
   }
 
   let precompile: EmberPrecompile;
@@ -354,7 +304,7 @@ export default function htmlbarsInlinePrecompile(babel: typeof Babel) {
     visitor: {
       Program: {
         enter(path: NodePath<t.Program>, state: State) {
-          state.programPath = path;
+          state.util = new ImportUtil(t, path);
 
           if (state.opts.precompilerPath) {
             // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -363,11 +313,11 @@ export default function htmlbarsInlinePrecompile(babel: typeof Babel) {
           } else if (state.opts.precompile) {
             precompile = state.opts.precompile;
           }
-
-          state.allAddedImports = Object.create(null);
         },
-        exit(path: NodePath<t.Program>, state: State) {
-          pruneImports(path, state);
+        exit(_path: NodePath<t.Program>, state: State) {
+          for (let { moduleName, export: exportName } of configuredModules(state)) {
+            state.util.removeImport(moduleName, exportName);
+          }
         },
       },
 
@@ -397,8 +347,9 @@ export default function htmlbarsInlinePrecompile(babel: typeof Babel) {
         let template = path.node.quasi.quasis.map((quasi) => quasi.value.cooked).join('');
 
         let emberIdentifier = ensureImport(
-          'createTemplateFactory',
+          path,
           '@ember/template-factory',
+          'createTemplateFactory',
           state
         );
 
@@ -466,7 +417,7 @@ export default function htmlbarsInlinePrecompile(babel: typeof Babel) {
           compileTemplate(
             precompile,
             template,
-            ensureImport('createTemplateFactory', '@ember/template-factory', state),
+            ensureImport(path, '@ember/template-factory', 'createTemplateFactory', state),
             userTypedOptions
           )
         );
@@ -491,13 +442,6 @@ function name(node: t.StringLiteral | t.Identifier): string {
   }
 }
 
-function unusedNameLike(scope: Scope, name: string, t: typeof Babel.types): t.Identifier {
-  if (/^[a-zA-Z]+$/.test(name) && !scope.hasBinding(name)) {
-    return t.identifier(name);
-  }
-  return scope.generateUidIdentifier(name);
-}
-
 function* configuredModules(state: State) {
   for (let moduleConfig of INLINE_PRECOMPILE_MODULES) {
     if (
@@ -520,31 +464,4 @@ function referencesInlineCompiler(
     }
   }
   return undefined;
-}
-
-function pruneImports(path: NodePath<t.Program>, state: State) {
-  for (let topLevelPath of path.get('body')) {
-    if (topLevelPath.isImportDeclaration()) {
-      let modulePath = topLevelPath.get('source').node.value;
-      for (let moduleConfig of configuredModules(state)) {
-        if (moduleConfig.moduleName === modulePath) {
-          let importSpecifierPath = topLevelPath
-            .get('specifiers')
-            .find((specifierPath) =>
-              moduleConfig.export === 'default'
-                ? specifierPath.isImportDefaultSpecifier()
-                : specifierPath.isImportSpecifier() &&
-                  name(specifierPath.node.imported) === moduleConfig.export
-            );
-          if (importSpecifierPath) {
-            if (topLevelPath.node.specifiers.length === 1) {
-              topLevelPath.remove();
-            } else {
-              importSpecifierPath.remove();
-            }
-          }
-        }
-      }
-    }
-  }
 }
