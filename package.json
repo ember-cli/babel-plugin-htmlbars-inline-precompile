@@ -9,7 +9,7 @@
     "prepare": "tsc",
     "build": "tsc",
     "pretest": "tsc",
-    "lint": "tsc && eslint --cache .",
+    "lint": "eslint --cache --ext .ts .",
     "test": "jest",
     "clean": "git clean -d -f -x src __tests__"
   },
