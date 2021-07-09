@@ -19,7 +19,13 @@
       ".*\\.ts"
     ]
   },
-  "main": "src/index.js",
+  "main": "src/node-main.js",
+  "exports": {
+    ".": {
+      "browser": "./src/plugin.js",
+      "default": "./src/node-main.js"
+    }
+  },
   "files": [
     "src/**/*.js",
     "src/**/*.d.ts",

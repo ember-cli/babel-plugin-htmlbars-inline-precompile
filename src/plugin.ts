@@ -1,7 +1,6 @@
 import type { NodePath } from '@babel/traverse';
 import type * as Babel from '@babel/core';
 import type { types as t } from '@babel/core';
-import { resolve } from 'path';
 import { ImportUtil } from 'babel-import-util';
 
 type EmberPrecompile = (templateString: string, options: Record<string, unknown>) => string;
@@ -425,14 +424,6 @@ export default function htmlbarsInlinePrecompile(babel: typeof Babel) {
     },
   };
 }
-
-htmlbarsInlinePrecompile._parallelBabel = {
-  requireFile: __filename,
-};
-
-htmlbarsInlinePrecompile.baseDir = function () {
-  return resolve(__dirname, '..');
-};
 
 function name(node: t.StringLiteral | t.Identifier): string {
   if (node.type === 'StringLiteral') {
