@@ -1,5 +1,7 @@
 import { resolve } from 'path';
 import makePlugin from './plugin';
+import type * as Babel from '@babel/core';
+
 import { Options as PluginOptions, EmberPrecompile } from './plugin';
 
 export interface Options extends PluginOptions {
@@ -27,12 +29,18 @@ const htmlbarsInlinePrecompile = makePlugin(function (opts: Options) {
   } else if (opts.precompile) {
     return opts.precompile;
   }
-});
+}) as {
+  (babel: typeof Babel): Babel.PluginObj<Options>;
+  _parallelBabel: { requireFile: string };
+  baseDir(): string;
+};
 
-(htmlbarsInlinePrecompile as any)._parallelBabel = {
+htmlbarsInlinePrecompile._parallelBabel = {
   requireFile: __filename,
 };
 
-(htmlbarsInlinePrecompile as any).baseDir = function () {
+htmlbarsInlinePrecompile.baseDir = function () {
   return resolve(__dirname, '..');
 };
+
+export default htmlbarsInlinePrecompile;

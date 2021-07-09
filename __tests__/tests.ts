@@ -1,6 +1,6 @@
 import path from 'path';
 import * as babel from '@babel/core';
-import HTMLBarsInlinePrecompile, { Options } from '../src/index';
+import HTMLBarsInlinePrecompile, { Options } from '..';
 import TransformTemplateLiterals from '@babel/plugin-transform-template-literals';
 import TransformModules from '@babel/plugin-transform-modules-amd';
 import TransformUnicodeEscapes from '@babel/plugin-transform-unicode-escapes';
