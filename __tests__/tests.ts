@@ -193,9 +193,7 @@ describe('htmlbars-inline-precompile', function () {
     );
 
     expect(transformed).toMatchInlineSnapshot(`
-      "import { createTemplateFactory } from \\"@ember/template-factory\\";
-
-      var compiled = function () {
+      "var compiled = function () {
         throw new Error(\\"NOOOOOOOOOOOOOOOOOOOOOO\\");
       }();"
     `);
@@ -368,18 +366,25 @@ describe('htmlbars-inline-precompile', function () {
   it('works properly when used along with modules transform', function () {
     plugins.push([TransformModules]);
     let transformed = transform(
-      "import { precompileTemplate } from '@ember/template-compilation';\nvar compiled = precompileTemplate('hello');"
+      "import { precompileTemplate } from '@ember/template-compilation';\n" +
+        "var compiled1 = precompileTemplate('hello');\n" +
+        "var compiled2 = precompileTemplate('goodbye');\n"
     );
 
     expect(transformed).toMatchInlineSnapshot(`
       "define([\\"@ember/template-factory\\"], function (_templateFactory) {
         \\"use strict\\";
 
-        var compiled = (0, _templateFactory.createTemplateFactory)(
+        var compiled1 = (0, _templateFactory.createTemplateFactory)(
         /*
           hello
         */
         \\"precompiled(hello)\\");
+        var compiled2 = (0, _templateFactory.createTemplateFactory)(
+        /*
+          goodbye
+        */
+        \\"precompiled(goodbye)\\");
       });"
     `);
   });

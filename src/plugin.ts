@@ -76,6 +76,7 @@ interface State {
   opts: Options;
   util: ImportUtil;
   precompile: EmberPrecompile;
+  templateFactory: { moduleName: string; exportName: string };
 }
 
 export default function makePlugin<O>(
@@ -85,21 +86,22 @@ export default function makePlugin<O>(
   return function htmlbarsInlinePrecompile(babel: typeof Babel): Babel.PluginObj<State> {
     let t = babel.types;
 
-    function compileTemplate(
-      precompile: EmberPrecompile,
+    function insertCompiledTemplate(
+      target: NodePath<t.Node>,
+      state: State,
       template: string,
-      templateCompilerIdentifier: t.Identifier,
       userTypedOptions: Record<string, unknown>
-    ): t.Expression {
+    ): void {
       let options = Object.assign({ contents: template }, userTypedOptions);
-
+      let precompile = state.precompile;
       let precompileResultString: string;
 
       if (options.insertRuntimeErrors) {
         try {
           precompileResultString = precompile(template, options);
         } catch (error) {
-          return runtimeErrorIIFE(babel, { ERROR_MESSAGE: error.message });
+          target.replaceWith(runtimeErrorIIFE(babel, { ERROR_MESSAGE: error.message }));
+          return;
         }
       } else {
         precompileResultString = precompile(template, options);
@@ -110,41 +112,33 @@ export default function makePlugin<O>(
       ) as t.File;
 
       let templateExpression = (precompileResultAST.program.body[0] as t.VariableDeclaration)
-        .declarations[0].init;
+        .declarations[0].init as t.Expression;
 
       t.addComment(
-        templateExpression!,
+        templateExpression,
         'leading',
         `\n  ${template.replace(/\*\//g, '*\\/')}\n`,
         /* line comment? */ false
       );
 
-      return t.callExpression(templateCompilerIdentifier, [templateExpression!]);
-    }
-
-    function ensureImport(
-      target: NodePath<t.Node>,
-      moduleName: string,
-      exportName: string,
-      state: State
-    ): t.Identifier {
-      let moduleOverrides = state.opts.outputModuleOverrides;
-      if (moduleOverrides) {
-        let glimmerModule = moduleOverrides[moduleName];
-        let glimmerExport = glimmerModule?.[exportName];
-
-        if (glimmerExport) {
-          exportName = glimmerExport[0];
-          moduleName = glimmerExport[1];
-        }
-      }
-      return state.util.import(target, moduleName, exportName);
+      let templateFactoryIdentifier = state.util.import(
+        target,
+        state.templateFactory.moduleName,
+        state.templateFactory.exportName
+      );
+      target.replaceWith(t.callExpression(templateFactoryIdentifier, [templateExpression]));
     }
 
     return {
       visitor: {
         Program: {
           enter(path: NodePath<t.Program>, state: State) {
+            let moduleName = '@ember/template-factory';
+            let exportName = 'createTemplateFactory';
+            let overrides = state.opts.outputModuleOverrides?.[moduleName]?.[exportName];
+            state.templateFactory = overrides
+              ? { exportName: overrides[0], moduleName: overrides[1] }
+              : { exportName, moduleName };
             state.util = new ImportUtil(t, path);
             state.precompile = loadPrecompiler(state.opts as O);
           },
@@ -179,15 +173,7 @@ export default function makePlugin<O>(
           }
 
           let template = path.node.quasi.quasis.map((quasi) => quasi.value.cooked).join('');
-
-          let emberIdentifier = ensureImport(
-            path,
-            '@ember/template-factory',
-            'createTemplateFactory',
-            state
-          );
-
-          path.replaceWith(compileTemplate(state.precompile, template, emberIdentifier, {}));
+          insertCompiledTemplate(path, state, template, {});
         },
 
         CallExpression(path: NodePath<t.CallExpression>, state: State) {
@@ -250,15 +236,7 @@ export default function makePlugin<O>(
               `${calleePath.node.name} can only be invoked with 2 arguments: the template string, and any static options`
             );
           }
-
-          path.replaceWith(
-            compileTemplate(
-              state.precompile,
-              template,
-              ensureImport(path, '@ember/template-factory', 'createTemplateFactory', state),
-              userTypedOptions
-            )
-          );
+          insertCompiledTemplate(path, state, template, userTypedOptions);
         },
       },
     };

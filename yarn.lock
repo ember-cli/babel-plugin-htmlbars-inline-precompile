@@ -1857,10 +1857,10 @@ aws4@^1.8.0:
   version "1.8.0"
   resolved "https://registry.yarnpkg.com/aws4/-/aws4-1.8.0.tgz#f0e003d9ca9e7f59c7a508945d7b2ef9a04a542f"
 
-babel-import-util@^0.1.0:
-  version "0.1.0"
-  resolved "https://registry.yarnpkg.com/babel-import-util/-/babel-import-util-0.1.0.tgz#1443a09efee6de450b68a6a7cc0c685481f655c4"
-  integrity sha512-sRzZn0mOuLLkjmuv5JhDvFexxMCin/R5f5O+Pq2muLPkpIH84rAtYsncL8+/qaSoRksp3C5zHVnyIBpCEjX/uA==
+babel-import-util@^0.2.0:
+  version "0.2.0"
+  resolved "https://registry.yarnpkg.com/babel-import-util/-/babel-import-util-0.2.0.tgz#b468bb679919601a3570f9e317536c54f2862e23"
+  integrity sha512-CtWYYHU/MgK88rxMrLfkD356dApswtR/kWZ/c6JifG1m10e7tBBrs/366dFzWMAoqYmG5/JSh+94tUSpIwh+ag==
 
 babel-jest@^26.6.3:
   version "26.6.3"
