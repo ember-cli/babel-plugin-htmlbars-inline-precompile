@@ -121,7 +121,10 @@ module.exports = function (babel) {
       precompileResultString = precompile(template, options);
     }
 
-    let precompileResultAST = babel.parse(`var precompileResult = ${precompileResultString};`);
+    let precompileResultAST = babel.parse(`var precompileResult = ${precompileResultString};`, {
+      babelrc: false,
+      configFile: false,
+    });
 
     let templateExpression = precompileResultAST.program.body[0].declarations[0].init;
 
