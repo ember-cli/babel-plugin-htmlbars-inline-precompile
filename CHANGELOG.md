@@ -1,3 +1,13 @@
+## v5.3.1 (2021-10-26)
+
+#### :bug: Bug Fix
+* [#477](https://github.com/ember-cli/babel-plugin-htmlbars-inline-precompile/pull/477) Ensure babel.parse does not use top level babel config. ([@rwjblue](https://github.com/rwjblue))
+
+#### Committers: 2
+- Chad Hietala ([@chadhietala](https://github.com/chadhietala))
+- Robert Jackson ([@rwjblue](https://github.com/rwjblue))
+
+
 ## v5.3.0 (2021-04-12)
 
 #### :rocket: Enhancement
