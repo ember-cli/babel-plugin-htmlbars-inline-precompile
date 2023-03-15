@@ -1,3 +1,20 @@
+⚠️ Archived ⚠️
+
+This library has been superceded by [babel-plugin-ember-template-compilation][gh-babel-etc] and [ember-template-imports][gh-eti].
+
+Depending on a consumer's [ember-source][gh-eti] version, [ember-cli-htmlbars][gh-ech] will select whether to use `babel-plugin-htmlbars-inline-precompile` or `babel-plugin-ember-template-compilation` - based on [this code][gh-the-condition] -- i.e: after `ember-source@3.27.0-alahpa.1`, only `babel-plugin-ember-template-compilation` will be used.
+
+At the time of archiving this repo, [`ember-source@3.x` is not under LTS](https://emberjs.com/releases/lts/)
+
+[gh-ember-source]: https://github.com/emberjs/ember.js/
+[gh-babel-etc]: https://github.com/emberjs/babel-plugin-ember-template-compilation
+[gh-eti]: https://github.com/ember-template-imports/ember-template-imports/
+[gh-ech]: https://github.com/ember-cli/ember-cli-htmlbars
+[gh-the-condition]: https://github.com/ember-cli/ember-cli-htmlbars/blob/edf8af6ecacdf9ac4acbfeab63f45237c2aab01b/lib/ember-addon-main.js#L197
+
+---------------------------------
+
+
 # babel-plugin-htmlbars-inline-precompile
 
 <a href="https://github.com/ember-cli/babel-plugin-htmlbars-inline-precompile"><img alt="Build Status" src="https://github.com/ember-cli/babel-plugin-htmlbars-inline-precompile/workflows/CI/badge.svg"></a>
