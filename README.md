@@ -2,7 +2,7 @@
 
 This library has been superceded by [babel-plugin-ember-template-compilation][gh-babel-etc] and [ember-template-imports][gh-eti].
 
-Depending on a consumer's [ember-source][gh-eti] version, [ember-cli-htmlbars][gh-ech] will select whether to use `babel-plugin-htmlbars-inline-precompile` or `babel-plugin-ember-template-compilation` - based on [this code][gh-the-condition] -- i.e: after `ember-source@3.27.0-alahpa.1`, only `babel-plugin-ember-template-compilation` will be used.
+Depending on a consumer's [ember-source][gh-ember-source] version, [ember-cli-htmlbars][gh-ech] will select whether to use `babel-plugin-htmlbars-inline-precompile` or `babel-plugin-ember-template-compilation` - based on [this code][gh-the-condition] -- i.e: after `ember-source@3.27.0-alahpa.1`, only `babel-plugin-ember-template-compilation` will be used.
 
 At the time of archiving this repo, [`ember-source@3.x` is not under LTS](https://emberjs.com/releases/lts/)
 
