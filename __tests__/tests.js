@@ -920,6 +920,23 @@ describe('htmlbars-inline-precompile', function () {
       });
     });
 
+    it('correctly handles scope function (object with different key value)', function () {
+      const source = '<Foo />';
+      transform(
+        `import { precompileTemplate } from '@ember/template-compilation';
+        import Foo$1 from 'foo';
+        var compiled = precompileTemplate('${source}', { 
+          scope() { return { 
+            Foo: Foo$1, 
+          }; 
+        }});`
+      );
+      expect(optionsReceived).toEqual({
+        contents: source,
+        locals: ['Foo'],
+      });
+    });
+
     it('errors if scope contains mismatched keys/values', function () {
       expect(() => {
         transform(
