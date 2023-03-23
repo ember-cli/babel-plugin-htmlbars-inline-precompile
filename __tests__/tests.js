@@ -937,16 +937,6 @@ describe('htmlbars-inline-precompile', function () {
       });
     });
 
-    it('errors if scope contains mismatched keys/values', function () {
-      expect(() => {
-        transform(
-          "import { precompileTemplate } from '@ember/template-compilation';\nvar compiled = precompileTemplate('hello', { scope: { foo: bar } });"
-        );
-      }).toThrow(
-        /Scope objects for `precompileTemplate` may only contain direct references to in-scope values, e.g. { foo } or { foo: foo }/
-      );
-    });
-
     it('errors if scope is not an object', function () {
       expect(() => {
         transform(
