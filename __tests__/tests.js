@@ -920,14 +920,21 @@ describe('htmlbars-inline-precompile', function () {
       });
     });
 
-    it('errors if scope contains mismatched keys/values', function () {
-      expect(() => {
-        transform(
-          "import { precompileTemplate } from '@ember/template-compilation';\nvar compiled = precompileTemplate('hello', { scope: { foo: bar } });"
-        );
-      }).toThrow(
-        /Scope objects for `precompileTemplate` may only contain direct references to in-scope values, e.g. { foo } or { foo: foo }/
+    it('correctly handles scope function (object with different key value)', function () {
+      const source = '<Foo />';
+      transform(
+        `import { precompileTemplate } from '@ember/template-compilation';
+        import Foo$1 from 'foo';
+        var compiled = precompileTemplate('${source}', { 
+          scope() { return { 
+            Foo: Foo$1, 
+          }; 
+        }});`
       );
+      expect(optionsReceived).toEqual({
+        contents: source,
+        locals: ['Foo'],
+      });
     });
 
     it('errors if scope is not an object', function () {
