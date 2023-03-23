@@ -72,17 +72,18 @@ module.exports = function (babel) {
       );
     }
 
-    return objExpression.properties.map((prop) => {
+    return objExpression.properties.reduce((res, prop) => {
       let { key, value } = prop;
 
-      if (value.type !== 'Identifier' || value.name !== key.name) {
+      if (value.type !== 'Identifier') {
         throw buildError(
           `Scope objects for \`${name}\` may only contain direct references to in-scope values, e.g. { ${key.name} } or { ${key.name}: ${key.name} }`
         );
       }
 
-      return key.name;
-    });
+      res[key.name] = value.name;
+      return res;
+    }, {});
   }
 
   function parseObjectExpression(state, buildError, name, node, shouldParseScope = false) {
@@ -109,6 +110,10 @@ module.exports = function (babel) {
   function compileTemplate(precompile, template, templateCompilerIdentifier, _options) {
     let options = Object.assign({ contents: template }, _options);
 
+    if (_options.locals) {
+      options.locals = Object.keys(_options.locals);
+    }
+
     let precompileResultString;
 
     if (options.insertRuntimeErrors) {
@@ -121,10 +126,16 @@ module.exports = function (babel) {
       precompileResultString = precompile(template, options);
     }
 
-    let precompileResultAST = babel.parse(`var precompileResult = ${precompileResultString};`, {
-      babelrc: false,
-      configFile: false,
-    });
+    const keys = Object.keys(_options.locals ?? {}).join(',');
+    const values = Object.values(_options.locals ?? {}).join(',');
+
+    let precompileResultAST = babel.parse(
+      `var precompileResult = ((${keys})=>(${precompileResultString}))(${values}); `,
+      {
+        babelrc: false,
+        configFile: false,
+      }
+    );
 
     let templateExpression = precompileResultAST.program.body[0].declarations[0].init;
 
@@ -139,17 +150,17 @@ module.exports = function (babel) {
   }
 
   function getScope(scope) {
-    let names = [];
+    let properties = {};
 
     while (scope) {
       for (let binding in scope.bindings) {
-        names.push(binding);
+        properties[binding] = binding;
       }
 
       scope = scope.parent;
     }
 
-    return names;
+    return properties;
   }
 
   function shouldUseAutomaticScope(options) {
