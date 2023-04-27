@@ -42,7 +42,7 @@
     "@typescript-eslint/parser": "^4.28.4",
     "common-tags": "^1.8.0",
     "ember-source": "^3.27.5",
-    "eslint": "^6.8.0",
+    "eslint": "^7.31.0",
     "eslint-config-prettier": "^6.15.0",
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-prettier": "^3.4.0",
