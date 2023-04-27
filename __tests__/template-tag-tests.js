@@ -3,6 +3,7 @@
 const babel = require('@babel/core');
 const HTMLBarsInlinePrecompile = require('../index');
 const TransformModules = require('@babel/plugin-transform-modules-amd');
+const { join } = require('path');
 
 const { preprocessEmbeddedTemplates } = HTMLBarsInlinePrecompile;
 
@@ -18,13 +19,15 @@ const TEMPLATE_TAG_CONFIG = {
   includeTemplateTokens: true,
 };
 
+const FILENAME = join(process.cwd(), 'foo-bar.js');
+
 describe('htmlbars-inline-precompile: useTemplateTagProposalSemantics', function () {
   let precompile, plugins, optionsReceived;
 
   function transform(code) {
     return babel
       .transform(code, {
-        filename: 'foo-bar.js',
+        filename: FILENAME,
         plugins,
       })
       .code.trim();
@@ -243,6 +246,9 @@ describe('htmlbars-inline-precompile: useTemplateTagProposalSemantics', function
       isProduction: undefined,
       locals: ['baz', 'foo', 'bar'],
       strictMode: true,
+      meta: {
+        moduleName: FILENAME,
+      },
     });
   });
 
@@ -560,6 +566,9 @@ describe('htmlbars-inline-precompile: useTemplateTagProposalSemantics', function
         isProduction: undefined,
         locals: ['Baz', 'foo', 'bar'],
         strictMode: true,
+        meta: {
+          moduleName: FILENAME,
+        },
       });
     });
 

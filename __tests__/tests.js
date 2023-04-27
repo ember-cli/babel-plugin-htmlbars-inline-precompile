@@ -8,6 +8,9 @@ const TransformTemplateLiterals = require('@babel/plugin-transform-template-lite
 const TransformModules = require('@babel/plugin-transform-modules-amd');
 const TransformUnicodeEscapes = require('@babel/plugin-transform-unicode-escapes');
 const { stripIndent } = require('common-tags');
+const { join } = require('path');
+
+const FILENAME = join(process.cwd(), 'foo-bar.js');
 
 describe('htmlbars-inline-precompile', function () {
   let precompile, plugins, optionsReceived;
@@ -15,7 +18,7 @@ describe('htmlbars-inline-precompile', function () {
   function transform(code) {
     return babel
       .transform(code, {
-        filename: 'foo-bar.js',
+        filename: FILENAME,
         plugins,
       })
       .code.trim();
@@ -118,6 +121,9 @@ describe('htmlbars-inline-precompile', function () {
 
     expect(optionsReceived).toEqual({
       contents: source,
+      meta: {
+        moduleName: FILENAME,
+      },
     });
   });
 
@@ -144,6 +150,9 @@ describe('htmlbars-inline-precompile', function () {
     expect(optionsReceived).toEqual({
       contents: source,
       isProduction: true,
+      meta: {
+        moduleName: FILENAME,
+      },
     });
   });
 
@@ -170,6 +179,9 @@ describe('htmlbars-inline-precompile', function () {
     expect(optionsReceived).toEqual({
       contents: source,
       isProduction: true,
+      meta: {
+        moduleName: FILENAME,
+      },
     });
   });
 
@@ -197,6 +209,9 @@ describe('htmlbars-inline-precompile', function () {
       isProduction: true,
       locals: null,
       strictMode: false,
+      meta: {
+        moduleName: FILENAME,
+      },
     });
   });
 
@@ -206,6 +221,9 @@ describe('htmlbars-inline-precompile', function () {
 
     expect(optionsReceived).toEqual({
       contents: source,
+      meta: {
+        moduleName: FILENAME,
+      },
     });
   });
 
@@ -239,6 +257,9 @@ describe('htmlbars-inline-precompile', function () {
       qux: true,
       stringifiedThing: {
         foo: 'baz',
+      },
+      meta: {
+        moduleName: FILENAME,
       },
     });
   });
@@ -312,6 +333,9 @@ describe('htmlbars-inline-precompile', function () {
       isProduction: undefined,
       locals: null,
       strictMode: false,
+      meta: {
+        moduleName: FILENAME,
+      },
     });
   });
 
@@ -861,6 +885,9 @@ describe('htmlbars-inline-precompile', function () {
       expect(optionsReceived).toEqual({
         contents: source,
         locals: ['foo', 'bar'],
+        meta: {
+          moduleName: FILENAME,
+        },
       });
     });
 
@@ -873,6 +900,9 @@ describe('htmlbars-inline-precompile', function () {
       expect(optionsReceived).toEqual({
         contents: source,
         locals: ['foo', 'bar'],
+        meta: {
+          moduleName: FILENAME,
+        },
       });
     });
 
@@ -884,6 +914,9 @@ describe('htmlbars-inline-precompile', function () {
       expect(optionsReceived).toEqual({
         contents: source,
         locals: ['foo', 'bar'],
+        meta: {
+          moduleName: FILENAME,
+        },
       });
     });
 
@@ -895,6 +928,9 @@ describe('htmlbars-inline-precompile', function () {
       expect(optionsReceived).toEqual({
         contents: source,
         locals: ['foo', 'bar'],
+        meta: {
+          moduleName: FILENAME,
+        },
       });
     });
 
@@ -906,6 +942,9 @@ describe('htmlbars-inline-precompile', function () {
       expect(optionsReceived).toEqual({
         contents: source,
         locals: ['foo', 'bar'],
+        meta: {
+          moduleName: FILENAME,
+        },
       });
     });
 
@@ -917,6 +956,9 @@ describe('htmlbars-inline-precompile', function () {
       expect(optionsReceived).toEqual({
         contents: source,
         locals: ['foo', 'bar'],
+        meta: {
+          moduleName: FILENAME,
+        },
       });
     });
 

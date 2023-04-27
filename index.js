@@ -428,6 +428,9 @@ module.exports = function (babel) {
           isProduction,
           locals,
           strictMode,
+          meta: {
+            moduleName: state.file.opts.filename,
+          },
         }),
         options
       );
@@ -521,6 +524,10 @@ module.exports = function (babel) {
         // options, so we override any existing strict option
         compilerOptions.strictMode = true;
       }
+
+      compilerOptions.meta = {
+        moduleName: state.file.opts.filename,
+      };
 
       replacePath(
         path,
